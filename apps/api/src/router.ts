@@ -1,5 +1,6 @@
 import { implementedContract } from './implemented';
 import { identityRouter } from './modules/identity';
+import { nutritionRouter } from './modules/nutrition';
 
 const health = implementedContract.health.handler(() => ({
   status: 'ok' as const,
@@ -10,4 +11,5 @@ const health = implementedContract.health.handler(() => ({
 export const router = implementedContract.router({
   health,
   identity: identityRouter,
+  nutrition: nutritionRouter,
 });
