@@ -3,7 +3,8 @@ import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import { AuthScreen } from './src/features/auth/auth-screen';
-import { DiaryScreen } from './src/features/diary/diary-screen';
+import { TodayCard } from './src/features/dashboard/today-card';
+import { DiaryScreen, localToday } from './src/features/diary/diary-screen';
 import { SessionScreen } from './src/features/workout/session-screen';
 import { WorkoutsScreen } from './src/features/workout/workouts-screen';
 import { signOut, useSession } from './src/lib/auth-client';
@@ -73,7 +74,14 @@ function Root() {
               </Pressable>
             ))}
           </View>
-          {tab === 'diary' ? <DiaryScreen /> : <WorkoutsScreen onOpenSession={setOpenSessionId} />}
+          {tab === 'diary' ? (
+            <>
+              <TodayCard date={localToday()} />
+              <DiaryScreen />
+            </>
+          ) : (
+            <WorkoutsScreen onOpenSession={setOpenSessionId} />
+          )}
         </>
       )}
       <StatusBar style="auto" />

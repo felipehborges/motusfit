@@ -1,6 +1,7 @@
 import { healthContract } from './health';
 import { identityContract } from './identity';
 import { nutritionContract } from './nutrition';
+import { statsContract } from './stats';
 import { workoutContract } from './workout';
 
 /**
@@ -12,10 +13,12 @@ export const contract = {
   identity: identityContract,
   nutrition: nutritionContract,
   workout: workoutContract,
+  stats: statsContract,
 };
 
 export * from './identity';
 export * from './nutrition';
+export * from './stats';
 export * from './workout';
 
 export type Contract = typeof contract;
