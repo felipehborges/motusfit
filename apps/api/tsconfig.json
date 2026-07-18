@@ -1,0 +1,4 @@
+{
+  "extends": "@motusfit/config/tsconfig.base.json",
+  "include": ["src"]
+}
