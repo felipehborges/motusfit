@@ -1,3 +1,4 @@
+import { mkdirSync } from 'node:fs';
 import { PGlite } from '@electric-sql/pglite';
 import { drizzle as drizzlePg, type NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { drizzle as drizzlePglite, type PgliteDatabase } from 'drizzle-orm/pglite';
@@ -22,7 +23,12 @@ export function createDatabase(options: CreateDatabaseOptions = {}): Database {
     const pool = new Pool({ connectionString: options.databaseUrl });
     return drizzlePg(pool, { schema });
   }
-  const client = new PGlite(options.pgliteDataDir ?? './.data/motusfit');
+  const dataDir = options.pgliteDataDir ?? './.data/motusfit';
+  if (!dataDir.startsWith('memory://')) {
+    // PGlite não cria o diretório recursivamente
+    mkdirSync(dataDir, { recursive: true });
+  }
+  const client = new PGlite(dataDir);
   return drizzlePglite(client, { schema });
 }
 

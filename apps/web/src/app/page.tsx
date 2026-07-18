@@ -5,6 +5,17 @@ export default function Home() {
       <p className="text-lg text-zinc-600 dark:text-zinc-400">
         Alimentação e treino em um só lugar.
       </p>
+      <div className="flex gap-3">
+        <a href="/login" className="rounded border border-zinc-300 px-4 py-2 dark:border-zinc-700">
+          Entrar
+        </a>
+        <a
+          href="/signup"
+          className="rounded bg-zinc-900 px-4 py-2 text-white dark:bg-zinc-100 dark:text-zinc-900"
+        >
+          Criar conta
+        </a>
+      </div>
     </main>
   );
 }
