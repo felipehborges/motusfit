@@ -1,4 +1,5 @@
 import { healthContract } from './health';
+import { identityContract } from './identity';
 
 /**
  * Contrato raiz da API v1 (contract-first — docs/api-guidelines.md).
@@ -6,6 +7,9 @@ import { healthContract } from './health';
  */
 export const contract = {
   health: healthContract,
+  identity: identityContract,
 };
+
+export * from './identity';
 
 export type Contract = typeof contract;

@@ -10,12 +10,14 @@
   },
   "dependencies": {
     "@hono/node-server": "catalog:",
+    "@motusfit/auth": "workspace:*",
     "@motusfit/contracts": "workspace:*",
     "@motusfit/core": "workspace:*",
     "@motusfit/db": "workspace:*",
     "@orpc/openapi": "catalog:",
     "@orpc/server": "catalog:",
     "@orpc/zod": "catalog:",
+    "drizzle-orm": "catalog:",
     "hono": "catalog:",
     "pino": "catalog:",
     "zod": "catalog:"

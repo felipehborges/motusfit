@@ -26,4 +26,22 @@ export function createDatabase(options: CreateDatabaseOptions = {}): Database {
   return drizzlePglite(client, { schema });
 }
 
+/**
+ * Aplica as migrations commitadas (packages/db/migrations) programaticamente.
+ * Usado no bootstrap com PGlite (dev/testes); produção usa drizzle-kit migrate.
+ */
+export async function applyMigrations(db: Database): Promise<void> {
+  const migrationsFolder = new URL('../migrations', import.meta.url).pathname.replace(
+    /^\/([A-Za-z]:)/,
+    '$1',
+  );
+  if ('$client' in db && db.$client instanceof PGlite) {
+    const { migrate } = await import('drizzle-orm/pglite/migrator');
+    await migrate(db as PgliteDatabase<typeof schema>, { migrationsFolder });
+  } else {
+    const { migrate } = await import('drizzle-orm/node-postgres/migrator');
+    await migrate(db as NodePgDatabase<typeof schema>, { migrationsFolder });
+  }
+}
+
 export { schema };
