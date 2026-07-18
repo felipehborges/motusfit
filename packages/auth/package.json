@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@better-auth/expo": "^1.6.23",
     "@motusfit/db": "workspace:*",
     "better-auth": "catalog:"
   },

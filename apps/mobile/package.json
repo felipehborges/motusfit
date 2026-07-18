@@ -11,9 +11,13 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@better-auth/expo": "^1.6.23",
     "@motusfit/contracts": "workspace:*",
     "@motusfit/core": "workspace:*",
+    "better-auth": "catalog:",
     "expo": "~57.0.7",
+    "expo-constants": "~57.0.6",
+    "expo-secure-store": "~57.0.1",
     "expo-status-bar": "~57.0.1",
     "react": "19.2.3",
     "react-native": "0.86.0"
