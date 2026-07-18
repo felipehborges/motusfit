@@ -15,6 +15,13 @@
       "when": 1784406272346,
       "tag": "0001_clear_mister_fear",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1784409339519,
+      "tag": "0002_amazing_retro_girl",
+      "breakpoints": true
     }
   ]
 }
