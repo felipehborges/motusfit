@@ -6,7 +6,15 @@
     "useIgnoreFile": true
   },
   "files": {
-    "includes": ["**", "!**/dist", "!**/.next", "!**/.expo", "!**/migrations", "!**/.data"]
+    "includes": [
+      "**",
+      "!**/dist",
+      "!**/.next",
+      "!**/.expo",
+      "!**/migrations",
+      "!**/.data",
+      "!apps/web/src/app/globals.css"
+    ]
   },
   "formatter": {
     "enabled": true,
