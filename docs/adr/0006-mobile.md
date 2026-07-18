@@ -9,7 +9,7 @@ iOS e Android a partir de um único código TypeScript, com pipeline de build/di
 
 ## Decisão
 
-- **Expo SDK 55** (React Native 0.83, **New Architecture** — obrigatória desde o SDK 55) com **Expo Router** (file-based) e **dev builds** (não Expo Go).
+- **Expo SDK atual** (scaffold gerado no SDK 57 / React Native 0.86; **New Architecture** — obrigatória desde o SDK 55) com **Expo Router** (file-based) e **dev builds** (não Expo Go).
 - **EAS** Build/Submit/Update para CI de builds nativos, lojas e OTA de JS.
 - **NativeWind 4** (Tailwind 3 no nativo) para estilo — mesmo modelo mental do web; migrar para NativeWind 5 (Tailwind 4) quando GA.
 - Dados/estado: mesma stack do ADR 0005 (TanStack Query + Zustand + RHF/Zod), com **persistência do cache do Query em MMKV** e mutações otimistas/idempotentes (`clientId`) — resiliência a rede ruim no MVP; offline-first completo (expo-sqlite + Drizzle + sync engine) fica como evolução planejada em [architecture.md](../architecture.md).

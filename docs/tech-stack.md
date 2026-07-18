@@ -12,7 +12,7 @@ Decisões tomadas em **julho/2026**, com base em pesquisa de documentação ofic
 | Banco | PostgreSQL 17 + Drizzle ORM (PGlite em dev/testes) | drizzle-orm 0.4x | [0003](adr/0003-database.md) |
 | Auth | Better Auth (+ plugin Expo) | 1.x | [0004](adr/0004-auth.md) |
 | Web | Next.js App Router + Tailwind CSS 4 | Next 16 | [0005](adr/0005-web.md) |
-| Mobile | Expo SDK 55 (RN 0.83, New Architecture) + Expo Router + NativeWind 4 | — | [0006](adr/0006-mobile.md) |
+| Mobile | Expo SDK 57 (RN 0.86, New Architecture) + Expo Router + NativeWind | — | [0006](adr/0006-mobile.md) |
 | Server state | TanStack Query | 5 | [0005](adr/0005-web.md) |
 | Client state | Zustand | 5 | [0005](adr/0005-web.md) |
 | Formulários | React Hook Form + Zod | RHF 7 / Zod 4 | [0005](adr/0005-web.md) |
