@@ -9,7 +9,9 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@motusfit/api-client": "workspace:*",
     "@motusfit/contracts": "workspace:*",
+    "@tanstack/react-query": "catalog:",
     "@motusfit/core": "workspace:*",
     "better-auth": "catalog:",
     "next": "16.2.10",

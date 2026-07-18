@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
+import { DiaryDay, localToday } from '@/features/diary/diary-day';
 import { signOut, useSession } from '@/lib/auth-client';
 
 export default function AppHome() {
@@ -19,21 +20,21 @@ export default function AppHome() {
   }
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center gap-4 p-8">
-      <h1 className="text-2xl font-bold">Olá, {session.user.name}</h1>
-      <p className="text-zinc-600 dark:text-zinc-400">
-        Dashboard chega na Fase 5 — diário e treinos primeiro.
-      </p>
-      <button
-        type="button"
-        className="rounded border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-700"
-        onClick={async () => {
-          await signOut();
-          router.replace('/login');
-        }}
-      >
-        Sair
-      </button>
+    <main className="flex min-h-screen flex-col items-center gap-6 p-8">
+      <header className="flex w-full max-w-2xl items-center justify-between">
+        <h1 className="text-2xl font-bold">Diário — {session.user.name}</h1>
+        <button
+          type="button"
+          className="rounded border border-zinc-300 px-3 py-1 text-sm dark:border-zinc-700"
+          onClick={async () => {
+            await signOut();
+            router.replace('/login');
+          }}
+        >
+          Sair
+        </button>
+      </header>
+      <DiaryDay date={localToday()} />
     </main>
   );
 }
