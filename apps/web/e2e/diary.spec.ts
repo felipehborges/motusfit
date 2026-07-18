@@ -11,7 +11,7 @@ test('signup → criar alimento → registrar refeição → totais do dia', asy
   await page.getByLabel('Senha').fill('senha-segura-123');
   await page.getByRole('button', { name: 'Criar conta' }).click();
 
-  await expect(page.getByRole('heading', { name: /Diário/ })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /Hoje/ })).toBeVisible();
 
   // Adicionar alimento novo no almoço (segunda seção)
   await page.getByRole('button', { name: '+ Adicionar alimento' }).nth(1).click();
