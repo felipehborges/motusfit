@@ -1,5 +1,5 @@
 import { createAuth } from '@motusfit/auth';
-import type { Food, SessionDetail, TodayStats } from '@motusfit/contracts';
+import type { Food, SessionDetail, TodayStats, WeeklyStats } from '@motusfit/contracts';
 import { applyMigrations, createDatabase } from '@motusfit/db';
 import type { Hono } from 'hono';
 import { beforeAll, describe, expect, it } from 'vitest';
@@ -109,6 +109,71 @@ describe('stats.today', () => {
     expect(stats.workoutSessions).toBe(1);
     expect(stats.workoutKcal).toBeGreaterThan(0);
     expect(stats.remainingKcal).toBeCloseTo(2000 + stats.workoutKcal - 260, 5);
+  });
+
+  it('weekly agrega sessões, volume, grupos musculares e kcal por dia', async () => {
+    const c = api(await signUp('s3@motusfit.test'));
+    await c.send('PUT', '/identity/profile', { displayName: 'S3', bodyWeightKg: 75 });
+
+    const food = await json<Food>(
+      c.send('POST', '/nutrition/foods', {
+        name: 'Aveia',
+        brand: null,
+        servingSize: 100,
+        servingUnit: 'g',
+        kcal: 380,
+        proteinG: 13,
+        carbsG: 67,
+        fatG: 7,
+      }),
+    );
+    await c.send('POST', '/nutrition/diary', {
+      date: today,
+      mealSlot: 'breakfast',
+      foodId: food.id,
+      quantity: 50,
+    });
+
+    const bench = await json<{ id: string }>(
+      c.send('POST', '/workout/exercises', {
+        name: 'Supino',
+        muscleGroup: 'chest',
+        equipment: null,
+      }),
+    );
+    const squat = await json<{ id: string }>(
+      c.send('POST', '/workout/exercises', {
+        name: 'Agachamento',
+        muscleGroup: 'legs',
+        equipment: null,
+      }),
+    );
+    const session = await json<SessionDetail>(c.send('POST', '/workout/sessions', {}));
+    for (const [exerciseId, weightKg] of [
+      [bench.id, 60],
+      [bench.id, 60],
+      [squat.id, 100],
+    ] as const) {
+      await c.send('POST', `/workout/sessions/${session.id}/sets`, {
+        sessionId: session.id,
+        exerciseId,
+        reps: 10,
+        weightKg,
+      });
+    }
+    await c.send('POST', `/workout/sessions/${session.id}/finish`, { id: session.id });
+
+    const weekly = await json<WeeklyStats>(c.get(`/stats/weekly/${today}`));
+    expect(weekly.workoutSessions).toBe(1);
+    expect(weekly.totalVolumeKg).toBe(60 * 10 + 60 * 10 + 100 * 10);
+    expect(weekly.setsByMuscleGroup).toEqual([
+      { muscleGroup: 'chest', sets: 2 },
+      { muscleGroup: 'legs', sets: 1 },
+    ]);
+    expect(weekly.kcalByDay).toHaveLength(7);
+    const todayEntry = weekly.kcalByDay.find((d) => d.date === today);
+    expect(todayEntry?.kcal).toBeCloseTo(190);
+    expect(weekly.kcalByDay.filter((d) => d.date !== today).every((d) => d.kcal === 0)).toBe(true);
   });
 
   it('sem meta, remainingKcal é null; sem dados, zeros', async () => {

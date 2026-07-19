@@ -5,6 +5,7 @@ import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-nati
 import { AuthScreen } from './src/features/auth/auth-screen';
 import { TodayCard } from './src/features/dashboard/today-card';
 import { DiaryScreen, localToday } from './src/features/diary/diary-screen';
+import { WeeklyStatsScreen } from './src/features/stats/weekly-stats-screen';
 import { SessionScreen } from './src/features/workout/session-screen';
 import { WorkoutsScreen } from './src/features/workout/workouts-screen';
 import { signOut, useSession } from './src/lib/auth-client';
@@ -21,7 +22,7 @@ export default function App() {
   );
 }
 
-type Tab = 'diary' | 'workouts';
+type Tab = 'diary' | 'workouts' | 'stats';
 
 function Root() {
   const { data: session, isPending } = useSession();
@@ -63,6 +64,7 @@ function Root() {
               [
                 ['diary', 'Diário'],
                 ['workouts', 'Treinos'],
+                ['stats', 'Estatísticas'],
               ] as const
             ).map(([value, label]) => (
               <Pressable
@@ -74,14 +76,14 @@ function Root() {
               </Pressable>
             ))}
           </View>
-          {tab === 'diary' ? (
+          {tab === 'diary' && (
             <>
               <TodayCard date={localToday()} />
               <DiaryScreen />
             </>
-          ) : (
-            <WorkoutsScreen onOpenSession={setOpenSessionId} />
           )}
+          {tab === 'workouts' && <WorkoutsScreen onOpenSession={setOpenSessionId} />}
+          {tab === 'stats' && <WeeklyStatsScreen date={localToday()} />}
         </>
       )}
       <StatusBar style="auto" />

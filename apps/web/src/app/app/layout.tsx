@@ -36,6 +36,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           <Link href="/app/treinos" className={linkClass('/app/treinos')}>
             Treinos
           </Link>
+          <Link href="/app/estatisticas" className={linkClass('/app/estatisticas')}>
+            Estatísticas
+          </Link>
         </nav>
         <button
           type="button"
