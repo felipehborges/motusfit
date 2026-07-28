@@ -5,6 +5,7 @@
 ```bash
 # Pré-requisitos: Node ≥ 24, pnpm ≥ 10 (corepack enable)
 pnpm install          # instala tudo + registra hooks (lefthook)
+pnpm db:seed          # popula o catálogo público de exercícios (1x por ambiente)
 pnpm dev              # sobe api + web (mobile: pnpm --filter mobile dev)
 pnpm test             # turbo run test
 pnpm check            # lint + typecheck
