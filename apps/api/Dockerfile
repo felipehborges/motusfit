@@ -7,9 +7,10 @@ FROM base AS build
 COPY pnpm-workspace.yaml pnpm-lock.yaml .npmrc package.json ./
 COPY apps/api/package.json apps/api/
 COPY packages ./packages
+COPY tools/package.json tools/
 RUN pnpm install --frozen-lockfile --filter @motusfit/api...
 COPY apps/api ./apps/api
-# Sem build step: Node 24 roda TS via tsx apenas em dev; produção usa bundle
+# Sem bundle: tsx interpreta TS direto também em produção (escala atual não justifica bundler dedicado)
 RUN pnpm --filter @motusfit/api exec tsx --version
 
 FROM base AS runtime

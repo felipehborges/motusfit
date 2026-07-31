@@ -1,0 +1,20 @@
+# Render Blueprint — deploy da API (docs/adr/0008-hospedagem.md).
+# "New +" → "Blueprint" no dashboard do Render, aponte pro repo; os envVars
+# marcados sync:false precisam ser preenchidos manualmente no dashboard.
+services:
+  - type: web
+    name: motusfit-api
+    runtime: docker
+    dockerfilePath: ./apps/api/Dockerfile
+    dockerContext: .
+    plan: free
+    healthCheckPath: /api/v1/health
+    envVars:
+      - key: BETTER_AUTH_SECRET
+        generateValue: true
+      - key: DATABASE_URL
+        sync: false
+      - key: BETTER_AUTH_URL
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false
