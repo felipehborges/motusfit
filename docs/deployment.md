@@ -14,7 +14,7 @@ Decisão de hosting registrada em [ADR 0008](adr/0008-hospedagem.md): Vercel (we
 
 1. **Neon**: criar projeto free → copiar a connection string → acrescentar `?sslmode=require`.
 2. **Render**: "New +" → "Blueprint" → apontar para este repo (usa [render.yaml](../render.yaml), que já referencia o `Dockerfile` de `apps/api`) → preencher `DATABASE_URL` (do Neon), `BETTER_AUTH_URL` (a própria URL pública que o Render atribui ao serviço, ex. `https://motusfit-api.onrender.com`) e `CORS_ORIGINS` (URL da Vercel, preenchida depois do passo 3). `BETTER_AUTH_SECRET` é gerado automaticamente pelo Blueprint.
-3. **Vercel**: importar o repo → Root Directory = `apps/web` (monorepo pnpm/Turborepo detectado automaticamente) → env var `NEXT_PUBLIC_API_URL` = URL do Render.
+3. **Vercel**: importar o repo → Root Directory = `apps/web` (monorepo pnpm/Turborepo detectado automaticamente) → env var `API_URL` (não `NEXT_PUBLIC_*`) = URL do Render.
 4. Voltar no Render e atualizar `CORS_ORIGINS` com a URL final da Vercel; redeploy.
 5. No celular: abrir a URL da Vercel, "Adicionar à tela de início" para um atalho tipo app.
 
@@ -41,6 +41,6 @@ Workflow `ci.yml` em todo PR e push na `master`:
 
 ## Variáveis de ambiente
 
-`.env.example` na raiz; validação Zod no bootstrap (`apps/api/src/env.ts`). Principais: `DATABASE_URL` (ausente ⇒ PGlite local; produção exige `sslmode=require` no Neon), `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `CORS_ORIGINS`, `NEXT_PUBLIC_API_URL`/`EXPO_PUBLIC_API_URL` (clientes). `PORT` (convenção do Render) tem prioridade sobre `API_PORT` quando presente.
+`.env.example` na raiz; validação Zod no bootstrap (`apps/api/src/env.ts`). Principais: `DATABASE_URL` (ausente ⇒ PGlite local; produção exige `sslmode=require` no Neon), `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `CORS_ORIGINS`, `API_URL` (proxy do web, servidor apenas)/`EXPO_PUBLIC_API_URL` (mobile, chama a API direto). `PORT` (convenção do Render) tem prioridade sobre `API_PORT` quando presente.
 
-Web e API em domínios distintos exigem cookie cross-site: `packages/auth` detecta `baseUrl` HTTPS e aplica `sameSite=none; secure` automaticamente (ver `createAuth`) — nada a configurar manualmente.
+Web e API em domínios distintos (Vercel + Render): o Next.js proxeia `/api/*` pra API através do próprio domínio do web (`apps/web/next.config.ts`, rewrite usando `API_URL`) — o navegador nunca fala com o Render diretamente, então o cookie de sessão é first-party de verdade. Sem isso, Safari/iOS bloqueia o cookie via ITP mesmo com `sameSite=none; secure` (que `packages/auth` também aplica, como defesa em profundidade, mas sozinho não bastou no Safari). Mobile não usa esse proxy — fala com a API direto via `EXPO_PUBLIC_API_URL`, sem esse problema (não é cookie de navegador).
