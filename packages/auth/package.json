@@ -11,8 +11,10 @@
   },
   "dependencies": {
     "@better-auth/expo": "^1.6.23",
+    "@better-auth/stripe": "catalog:",
     "@motusfit/db": "workspace:*",
-    "better-auth": "catalog:"
+    "better-auth": "catalog:",
+    "stripe": "catalog:"
   },
   "devDependencies": {
     "@motusfit/config": "workspace:*",

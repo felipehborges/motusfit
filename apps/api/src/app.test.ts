@@ -1,5 +1,6 @@
 import { createAuth } from '@motusfit/auth';
-import { applyMigrations, createDatabase } from '@motusfit/db';
+import { applyMigrations, createDatabase, schema } from '@motusfit/db';
+import { eq } from 'drizzle-orm';
 import type { Hono } from 'hono';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { createApp } from './app';
@@ -11,9 +12,10 @@ const env = loadEnv({
 });
 
 let app: Hono;
+let db: Awaited<ReturnType<typeof createDatabase>>;
 
 beforeAll(async () => {
-  const db = createDatabase({ pgliteDataDir: 'memory://' });
+  db = createDatabase({ pgliteDataDir: 'memory://' });
   await applyMigrations(db);
   const auth = createAuth({
     db,
@@ -25,6 +27,11 @@ beforeAll(async () => {
 });
 
 async function signUp(email: string): Promise<string> {
+  const { cookie } = await signUpFull(email);
+  return cookie;
+}
+
+async function signUpFull(email: string): Promise<{ cookie: string; userId: string }> {
   const res = await app.request('/api/auth/sign-up/email', {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
@@ -33,7 +40,8 @@ async function signUp(email: string): Promise<string> {
   expect(res.status).toBe(200);
   const cookie = res.headers.get('set-cookie');
   if (!cookie) throw new Error('signup não retornou cookie de sessão');
-  return cookie;
+  const body = (await res.json()) as { user: { id: string } };
+  return { cookie, userId: body.user.id };
 }
 
 describe('GET /api/v1/health', () => {
@@ -94,6 +102,36 @@ describe('auth + perfil', () => {
     const res = await app.request('/api/v1/identity/profile', { headers: { cookie: cookieD } });
     expect(res.status).toBe(200);
     expect(await res.json()).toBeNull();
+  });
+});
+
+describe('identity.billing.getPlan (ADR 0008)', () => {
+  it('usuário novo começa em plano free', async () => {
+    const cookie = await signUp('billing-free@motusfit.test');
+    const res = await app.request('/api/v1/identity/billing/plan', { headers: { cookie } });
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ plan: 'free' });
+  });
+
+  it('assinatura ativa vira premium; cancelada volta a free', async () => {
+    const { cookie, userId } = await signUpFull('billing-premium@motusfit.test');
+    await db.insert(schema.subscriptions).values({
+      id: 'sub_billing_test',
+      plan: 'premium',
+      referenceId: userId,
+      status: 'active',
+    });
+
+    const active = await app.request('/api/v1/identity/billing/plan', { headers: { cookie } });
+    expect(await active.json()).toEqual({ plan: 'premium' });
+
+    await db
+      .update(schema.subscriptions)
+      .set({ status: 'canceled' })
+      .where(eq(schema.subscriptions.id, 'sub_billing_test'));
+
+    const canceled = await app.request('/api/v1/identity/billing/plan', { headers: { cookie } });
+    expect(await canceled.json()).toEqual({ plan: 'free' });
   });
 });
 

@@ -2,6 +2,7 @@ import { expo } from '@better-auth/expo';
 import type { Database } from '@motusfit/db';
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
+import { type BillingOptions, createBillingPlugin } from './billing';
 
 /** Scheme de deep link do app Expo (apps/mobile/app.json). */
 export const MOBILE_APP_SCHEME = 'motusfit';
@@ -11,6 +12,8 @@ export type CreateAuthOptions = {
   secret: string;
   baseUrl: string;
   trustedOrigins: string[];
+  /** Ausente ⇒ billing desabilitado, todo usuário fica em plano free (ADR 0008). */
+  billing?: BillingOptions | undefined;
 };
 
 /**
@@ -23,7 +26,7 @@ export function createAuth(options: CreateAuthOptions) {
     secret: options.secret,
     baseURL: options.baseUrl,
     trustedOrigins: [...options.trustedOrigins, `${MOBILE_APP_SCHEME}://`],
-    plugins: [expo()],
+    plugins: [expo(), ...(options.billing ? [createBillingPlugin(options.billing)] : [])],
     emailAndPassword: {
       enabled: true,
       minPasswordLength: 8,
@@ -33,3 +36,7 @@ export function createAuth(options: CreateAuthOptions) {
 
 export type Auth = ReturnType<typeof createAuth>;
 export type Session = Auth['$Infer']['Session'];
+
+export type { BillingOptions } from './billing';
+export { PREMIUM_PLAN_NAME } from './billing';
+export * from './entitlements';

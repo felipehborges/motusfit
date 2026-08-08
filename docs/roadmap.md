@@ -66,9 +66,9 @@ Fases sequenciais; dentro de cada fase, tarefas pequenas e independentes (1 tare
 
 ## Fase 7 — Premium (pós-MVP)
 
-7.1 ADR billing + plugin Stripe do Better Auth
-7.2 Entitlements (`plan` no user; gating por contrato)
-7.3 Primeira feature premium (a definir com dados de uso)
+7.1 ✅ ADR billing + plugin Stripe do Better Auth ([ADR 0008](adr/0008-premium-billing.md))
+7.2 ✅ Entitlements (`plan` no user; gating por contrato) — `getUserPlan` + middleware `requirePremium`, contrato `identity.billing.getPlan`
+7.3 Primeira feature premium — ainda não definida por dados de uso; `requirePremium` está pronto para gatear a primeira que surgir
 
 ## Backlog futuro (sem fase)
 

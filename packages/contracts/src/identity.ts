@@ -18,6 +18,15 @@ export const profileInputSchema = profileSchema.partial().extend({
   displayName: z.string().min(1).max(100),
 });
 
+// Billing (ADR 0008): checkout/portal são chamados direto no cliente Better
+// Auth (plugin stripe-client) — aqui expomos só a leitura do entitlement,
+// fonte única usada tanto pela UI (mostrar badge/CTA) quanto pelo gating
+// de procedimentos premium no backend.
+export const planSchema = z.enum(['free', 'premium']);
+export type Plan = z.infer<typeof planSchema>;
+
+export const billingPlanSchema = z.object({ plan: planSchema });
+
 export const identityContract = {
   profile: {
     get: oc
@@ -27,5 +36,10 @@ export const identityContract = {
       .route({ method: 'PUT', path: '/identity/profile', tags: ['identity'] })
       .input(profileInputSchema)
       .output(profileSchema),
+  },
+  billing: {
+    getPlan: oc
+      .route({ method: 'GET', path: '/identity/billing/plan', tags: ['identity'] })
+      .output(billingPlanSchema),
   },
 };

@@ -1,4 +1,4 @@
-import type { Auth } from '@motusfit/auth';
+import { type Auth, getUserPlan } from '@motusfit/auth';
 import type { Database } from '@motusfit/db';
 import { ORPCError, os } from '@orpc/server';
 
@@ -23,4 +23,17 @@ export const requireAuth = base.middleware(({ context, next }) => {
     throw new ORPCError('UNAUTHORIZED');
   }
   return next({ context: { ...context, user: context.user } });
+});
+
+/**
+ * Gating de features premium (ADR 0008 / docs/roadmap.md 7.2). Já inclui
+ * `requireAuth` — basta `.use(requirePremium)`. A primeira feature a usar
+ * isto entra na Fase 7.3, quando definida.
+ */
+export const requirePremium = requireAuth.concat(async ({ context, next }) => {
+  const plan = await getUserPlan(context.db, context.user.id);
+  if (plan !== 'premium') {
+    throw new ORPCError('FORBIDDEN', { message: 'Recurso exclusivo do plano premium' });
+  }
+  return next({ context });
 });

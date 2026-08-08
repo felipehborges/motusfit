@@ -16,6 +16,18 @@ const auth = createAuth({
   secret: env.BETTER_AUTH_SECRET,
   baseUrl: env.BETTER_AUTH_URL,
   trustedOrigins: env.CORS_ORIGINS,
+  // ADR 0008: billing é opt-in — sem as três env vars, ninguém vira premium.
+  billing:
+    env.BILLING_ENABLED &&
+    env.STRIPE_SECRET_KEY &&
+    env.STRIPE_WEBHOOK_SECRET &&
+    env.STRIPE_PREMIUM_MONTHLY_PRICE_ID
+      ? {
+          secretKey: env.STRIPE_SECRET_KEY,
+          webhookSecret: env.STRIPE_WEBHOOK_SECRET,
+          premiumMonthlyPriceId: env.STRIPE_PREMIUM_MONTHLY_PRICE_ID,
+        }
+      : undefined,
 });
 
 const app = createApp({ env, db, auth });
