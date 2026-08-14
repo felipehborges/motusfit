@@ -136,6 +136,18 @@ describe('identity.billing.getPlan (ADR 0008)', () => {
 });
 
 describe('loadEnv', () => {
+  it('desliga auth por padrão no desenvolvimento e exige em produção', () => {
+    expect(loadEnv({ BETTER_AUTH_SECRET: 'segredo-de-teste-min-16-chars' }).authEnabled).toBe(
+      false,
+    );
+    expect(
+      loadEnv({
+        NODE_ENV: 'production',
+        BETTER_AUTH_SECRET: 'segredo-de-teste-min-16-chars',
+      }).authEnabled,
+    ).toBe(true);
+  });
+
   it('rejeita env inválida', () => {
     expect(() => loadEnv({ API_PORT: 'abc' })).toThrow(/inválidas/);
   });

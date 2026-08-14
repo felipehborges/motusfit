@@ -4,6 +4,7 @@ import { z } from 'zod';
 const envSchema = z
   .object({
     NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
+    AUTH_ENABLED: z.stringbool().optional(),
     API_PORT: z.coerce.number().int().positive().default(3001),
     DATABASE_URL: z.string().url().optional(),
     BETTER_AUTH_SECRET: z.string().min(16),
@@ -31,7 +32,12 @@ const envSchema = z
     },
   );
 
-export type Env = z.infer<typeof envSchema>;
+type ParsedEnv = z.infer<typeof envSchema>;
+
+export type Env = Omit<ParsedEnv, 'AUTH_ENABLED'> & {
+  /** Auth fica desligada no desenvolvimento para facilitar a construção do produto. */
+  authEnabled: boolean;
+};
 
 export function loadEnv(source: NodeJS.ProcessEnv = process.env): Env {
   // Render (e outros PaaS) injetam PORT; tem prioridade sobre API_PORT quando presente.
@@ -40,5 +46,10 @@ export function loadEnv(source: NodeJS.ProcessEnv = process.env): Env {
   if (!result.success) {
     throw new Error(`Variáveis de ambiente inválidas:\n${result.error.message}`);
   }
-  return result.data;
+  return {
+    ...result.data,
+    // Em produção e testes a autenticação continua sendo obrigatória. No desenvolvimento,
+    // o app usa um único usuário local até o fluxo de contas voltar a ser necessário.
+    authEnabled: result.data.AUTH_ENABLED ?? result.data.NODE_ENV !== 'development',
+  };
 }

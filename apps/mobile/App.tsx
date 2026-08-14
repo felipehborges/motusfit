@@ -1,15 +1,13 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
-import { AuthScreen } from './src/features/auth/auth-screen';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { TodayCard } from './src/features/dashboard/today-card';
 import { DiaryScreen, localToday } from './src/features/diary/diary-screen';
 import { ProfileScreen } from './src/features/profile/profile-screen';
 import { WeeklyStatsScreen } from './src/features/stats/weekly-stats-screen';
 import { SessionScreen } from './src/features/workout/session-screen';
 import { WorkoutsScreen } from './src/features/workout/workouts-screen';
-import { signOut, useSession } from './src/lib/auth-client';
 
 // Navegação por estado; Expo Router entra quando as telas se multiplicarem (ADR 0006).
 export default function App() {
@@ -26,34 +24,13 @@ export default function App() {
 type Tab = 'diary' | 'workouts' | 'stats' | 'profile';
 
 function Root() {
-  const { data: session, isPending } = useSession();
   const [tab, setTab] = useState<Tab>('diary');
   const [openSessionId, setOpenSessionId] = useState<string | null>(null);
-
-  if (isPending) {
-    return (
-      <View style={styles.center}>
-        <ActivityIndicator />
-      </View>
-    );
-  }
-
-  if (!session) {
-    return (
-      <>
-        <AuthScreen />
-        <StatusBar style="auto" />
-      </>
-    );
-  }
 
   return (
     <View style={styles.app}>
       <View style={styles.header}>
         <Text style={styles.title}>MotusFit</Text>
-        <Pressable onPress={() => signOut()}>
-          <Text style={styles.signOut}>Sair</Text>
-        </Pressable>
       </View>
 
       {openSessionId ? (
@@ -95,7 +72,6 @@ function Root() {
 }
 
 const styles = StyleSheet.create({
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#fff' },
   app: { flex: 1, backgroundColor: '#fff', paddingTop: 56 },
   header: {
     flexDirection: 'row',
@@ -105,7 +81,6 @@ const styles = StyleSheet.create({
     paddingBottom: 8,
   },
   title: { fontSize: 22, fontWeight: '700' },
-  signOut: { color: '#52525b', textDecorationLine: 'underline' },
   tabs: { flexDirection: 'row', gap: 8, paddingHorizontal: 16, paddingBottom: 4 },
   tab: {
     borderRadius: 8,

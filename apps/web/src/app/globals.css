@@ -24,3 +24,15 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Os controles nativos variam por navegador e ficavam pouco visíveis no tema escuro. */
+.number-input {
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+.number-input::-webkit-inner-spin-button,
+.number-input::-webkit-outer-spin-button {
+  margin: 0;
+  -webkit-appearance: none;
+}
