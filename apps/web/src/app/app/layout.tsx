@@ -40,16 +40,21 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             Estatísticas
           </Link>
         </nav>
-        <button
-          type="button"
-          className="rounded border border-zinc-300 px-3 py-1 text-sm dark:border-zinc-700"
-          onClick={async () => {
-            await signOut();
-            router.replace('/login');
-          }}
-        >
-          Sair
-        </button>
+        <div className="flex items-center gap-2">
+          <Link href="/app/perfil" className={linkClass('/app/perfil')}>
+            Perfil
+          </Link>
+          <button
+            type="button"
+            className="rounded border border-zinc-300 px-3 py-1 text-sm dark:border-zinc-700"
+            onClick={async () => {
+              await signOut();
+              router.replace('/login');
+            }}
+          >
+            Sair
+          </button>
+        </div>
       </header>
       {children}
     </div>

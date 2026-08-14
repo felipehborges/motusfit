@@ -21,6 +21,10 @@ export type CreateAuthOptions = {
  * E-mail+senha no MVP; OAuth/2FA/passkeys entram via plugins depois.
  */
 export function createAuth(options: CreateAuthOptions) {
+  // Web e API em domínios distintos (ex.: Vercel + Render) exigem cookie
+  // cross-site: SameSite=None só é aceito pelo navegador com Secure (HTTPS).
+  const crossSite = options.baseUrl.startsWith('https://');
+
   return betterAuth({
     database: drizzleAdapter(options.db, { provider: 'pg', usePlural: true }),
     secret: options.secret,
@@ -31,6 +35,9 @@ export function createAuth(options: CreateAuthOptions) {
       enabled: true,
       minPasswordLength: 8,
     },
+    ...(crossSite && {
+      advanced: { defaultCookieAttributes: { sameSite: 'none', secure: true } },
+    }),
   });
 }
 

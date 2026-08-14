@@ -34,7 +34,9 @@ const envSchema = z
 export type Env = z.infer<typeof envSchema>;
 
 export function loadEnv(source: NodeJS.ProcessEnv = process.env): Env {
-  const result = envSchema.safeParse(source);
+  // Render (e outros PaaS) injetam PORT; tem prioridade sobre API_PORT quando presente.
+  const merged = source.PORT ? { ...source, API_PORT: source.PORT } : source;
+  const result = envSchema.safeParse(merged);
   if (!result.success) {
     throw new Error(`Variáveis de ambiente inválidas:\n${result.error.message}`);
   }
