@@ -2,8 +2,20 @@
 
 import type { Routine } from '@motusfit/contracts';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  CalendarDays,
+  ChevronRight,
+  Clock3,
+  Dumbbell,
+  Edit3,
+  Flame,
+  Plus,
+  Trash2,
+  Zap,
+} from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { Card, PageHeader, SectionHeader, StatusPill } from '@/components/ui';
 import { RoutineForm } from '@/features/workout/routine-form';
 import { api } from '@/lib/api';
 
@@ -11,7 +23,6 @@ export default function WorkoutsPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [editing, setEditing] = useState<Routine | 'new' | null>(null);
-
   const routinesQuery = useQuery(api.workout.routines.list.queryOptions());
   const historyQuery = useQuery(
     api.workout.sessions.history.queryOptions({ input: { limit: 10 } }),
@@ -21,7 +32,6 @@ export default function WorkoutsPage() {
     queryClient.invalidateQueries({ queryKey: api.workout.routines.list.key() });
     setEditing(null);
   };
-
   const removeRoutine = useMutation(
     api.workout.routines.remove.mutationOptions({ onSuccess: invalidate }),
   );
@@ -32,93 +42,137 @@ export default function WorkoutsPage() {
   );
 
   return (
-    <div className="flex w-full max-w-2xl flex-col gap-6">
-      <section className="flex flex-col gap-3">
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold">Rotinas</h2>
-          <div className="flex gap-2">
-            <button
-              type="button"
-              className="rounded border border-zinc-300 px-3 py-1 text-sm dark:border-zinc-700"
-              onClick={() => startSession.mutate({})}
-            >
-              Treino livre
-            </button>
-            <button
-              type="button"
-              className="rounded bg-zinc-900 px-3 py-1 text-sm text-white dark:bg-zinc-100 dark:text-zinc-900"
-              onClick={() => setEditing('new')}
-            >
-              Nova rotina
-            </button>
-          </div>
+    <div>
+      <PageHeader
+        eyebrow="Centro de treino"
+        title="Construa sua força."
+        description="Rotinas objetivas, progressão visível e zero distrações na hora de treinar."
+        action={
+          <button type="button" className="mf-btn" onClick={() => setEditing('new')}>
+            <Plus size={16} /> Nova rotina
+          </button>
+        }
+      />
+
+      <Card className="mf-workout-hero">
+        <div className="mf-workout-hero-icon">
+          <Zap size={24} fill="currentColor" />
         </div>
+        <div>
+          <StatusPill tone="success">Pronto para começar</StatusPill>
+          <h2>Treino livre</h2>
+          <p>Entre no modo treino agora e escolha os exercícios durante a sessão.</p>
+        </div>
+        <button
+          type="button"
+          className="mf-btn"
+          disabled={startSession.isPending}
+          onClick={() => startSession.mutate({})}
+        >
+          <Dumbbell size={16} /> Iniciar agora
+        </button>
+      </Card>
 
-        {editing !== null && (
+      {editing !== null && (
+        <div className="mf-editor-wrap">
           <RoutineForm routine={editing === 'new' ? undefined : editing} onDone={invalidate} />
-        )}
+        </div>
+      )}
 
-        {routinesQuery.isPending && <p>Carregando rotinas…</p>}
-        {(routinesQuery.data ?? []).map((routine) => (
-          <div
-            key={routine.id}
-            className="flex items-center justify-between rounded-lg border border-zinc-200 p-4 dark:border-zinc-800"
-          >
-            <div>
-              <p className="font-medium">{routine.name}</p>
-              <p className="text-sm text-zinc-500">
-                {routine.exercises.map((e) => e.exercise.name).join(' · ') || 'Sem exercícios'}
+      <section className="mf-section-block">
+        <SectionHeader
+          eyebrow="Biblioteca"
+          title="Minhas rotinas"
+          description="Planos prontos para manter a consistência."
+        />
+        {routinesQuery.isPending && <p className="mf-loading">Carregando rotinas…</p>}
+        <div className="mf-routine-grid">
+          {(routinesQuery.data ?? []).map((routine, index) => (
+            <Card key={routine.id} className="mf-routine-card">
+              <div className="mf-routine-number">{String(index + 1).padStart(2, '0')}</div>
+              <span className="mf-routine-icon">
+                <Dumbbell size={21} />
+              </span>
+              <h3>{routine.name}</h3>
+              <p>
+                {routine.exercises.map((e) => e.exercise.name).join(' · ') ||
+                  'Adicione exercícios para começar'}
               </p>
-            </div>
-            <div className="flex gap-2 text-sm">
-              <button
-                type="button"
-                className="rounded bg-zinc-900 px-3 py-1 text-white dark:bg-zinc-100 dark:text-zinc-900"
-                onClick={() => startSession.mutate({ routineId: routine.id })}
-              >
-                Iniciar
-              </button>
-              <button type="button" className="underline" onClick={() => setEditing(routine)}>
-                editar
-              </button>
-              <button
-                type="button"
-                className="text-red-600 underline"
-                onClick={() => removeRoutine.mutate({ id: routine.id })}
-              >
-                excluir
-              </button>
-            </div>
-          </div>
-        ))}
+              <div className="mf-routine-meta">
+                <span>
+                  <Flame size={13} /> {routine.exercises.length} exercícios
+                </span>
+                <span>
+                  <Clock3 size={13} /> ~45 min
+                </span>
+              </div>
+              <div className="mf-routine-actions">
+                <button
+                  type="button"
+                  className="mf-btn"
+                  onClick={() => startSession.mutate({ routineId: routine.id })}
+                >
+                  Iniciar <ChevronRight size={15} />
+                </button>
+                <button
+                  type="button"
+                  className="mf-icon-btn"
+                  aria-label={`Editar ${routine.name}`}
+                  onClick={() => setEditing(routine)}
+                >
+                  <Edit3 size={15} />
+                </button>
+                <button
+                  type="button"
+                  className="mf-icon-btn danger"
+                  aria-label={`Excluir ${routine.name}`}
+                  onClick={() => removeRoutine.mutate({ id: routine.id })}
+                >
+                  <Trash2 size={15} />
+                </button>
+              </div>
+            </Card>
+          ))}
+        </div>
         {routinesQuery.data?.length === 0 && editing === null && (
-          <p className="text-sm text-zinc-500">Nenhuma rotina ainda — crie a primeira.</p>
+          <div className="mf-empty">Nenhuma rotina ainda. Crie seu primeiro plano de treino.</div>
         )}
       </section>
 
-      <section className="flex flex-col gap-2">
-        <h2 className="text-lg font-semibold">Histórico</h2>
-        {(historyQuery.data?.sessions ?? []).map((session) => (
-          <button
-            key={session.id}
-            type="button"
-            className="flex items-center justify-between rounded-lg border border-zinc-200 p-3 text-left text-sm dark:border-zinc-800"
-            onClick={() => router.push(`/app/treinos/sessao/${session.id}`)}
-          >
-            <span>
-              <span className="font-medium">{session.title}</span>
-              <span className="text-zinc-500"> — {session.startedAt.slice(0, 10)}</span>
-            </span>
-            <span className="text-zinc-500">
-              {session.totalSets} séries · {Math.round(session.volumeKg)} kg
-              {session.estimatedKcal != null && ` · ~${Math.round(session.estimatedKcal)} kcal`}
-              {session.finishedAt === null && ' · em andamento'}
-            </span>
-          </button>
-        ))}
-        {historyQuery.data?.sessions.length === 0 && (
-          <p className="text-sm text-zinc-500">Nenhum treino registrado.</p>
-        )}
+      <section className="mf-section-block">
+        <SectionHeader
+          eyebrow="Histórico"
+          title="Atividade recente"
+          description="Cada sessão é uma linha na sua evolução."
+        />
+        <Card className="mf-history-card">
+          {(historyQuery.data?.sessions ?? []).map((session) => (
+            <button
+              key={session.id}
+              type="button"
+              className="mf-history-row"
+              onClick={() => router.push(`/app/treinos/sessao/${session.id}`)}
+            >
+              <span className="mf-history-date">
+                <CalendarDays size={17} />
+              </span>
+              <span className="mf-history-main">
+                <strong>{session.title}</strong>
+                <small>{new Date(session.startedAt).toLocaleDateString('pt-BR')}</small>
+              </span>
+              <span className="mf-history-stats">
+                <b>{session.totalSets}</b> séries <b>{Math.round(session.volumeKg)}</b> kg
+              </span>
+              <StatusPill tone={session.finishedAt === null ? 'warning' : 'success'}>
+                {session.finishedAt === null ? 'Em andamento' : 'Concluído'}
+              </StatusPill>
+              <ChevronRight size={16} />
+            </button>
+          ))}
+          {historyQuery.data?.sessions.length === 0 && (
+            <div className="mf-empty">Nenhum treino registrado. Seu histórico começa hoje.</div>
+          )}
+        </Card>
       </section>
     </div>
   );

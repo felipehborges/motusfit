@@ -2,7 +2,9 @@
 
 import type { Exercise, SessionDetail } from '@motusfit/contracts';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Check, Clock3, Dumbbell, Plus, Search, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { Card, Metric, PageHeader, StatusPill } from '@/components/ui';
 import { api } from '@/lib/api';
 
 export function SessionView({
@@ -30,45 +32,62 @@ export function SessionView({
     }),
   );
 
-  if (sessionQuery.isPending) return <p>Carregando sessão…</p>;
-  if (sessionQuery.isError) return <p className="text-red-600">Sessão não encontrada.</p>;
+  if (sessionQuery.isPending) return <p className="mf-loading">Preparando sua sessão…</p>;
+  if (sessionQuery.isError) return <p className="text-red-400">Sessão não encontrada.</p>;
 
   const session = sessionQuery.data;
   const readOnly = session.finishedAt !== null;
 
   return (
-    <div className="flex w-full max-w-2xl flex-col gap-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-lg font-semibold">{session.title}</h2>
-          <p className="text-sm text-zinc-500">
-            {Math.round(session.volumeKg)} kg de volume · {session.totalSets} séries
-            {session.estimatedKcal != null && ` · ~${Math.round(session.estimatedKcal)} kcal`}
-          </p>
-        </div>
-        {!readOnly && (
-          <button
-            type="button"
-            disabled={finish.isPending}
-            className="rounded bg-zinc-900 px-3 py-1 text-sm text-white disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900"
-            onClick={() => finish.mutate({ id: session.id })}
-          >
-            Concluir treino
-          </button>
-        )}
-      </div>
-
-      {session.exercises.map((exercise) => (
-        <ExerciseBlock
-          key={exercise.id}
-          session={session}
-          exercise={exercise}
-          readOnly={readOnly}
-          onChanged={invalidate}
+    <div>
+      <PageHeader
+        eyebrow={readOnly ? 'Treino concluído' : 'Sessão em andamento'}
+        title={session.title}
+        description="Registre cada série. O progresso mora nos detalhes."
+        action={
+          !readOnly ? (
+            <button
+              type="button"
+              disabled={finish.isPending}
+              className="mf-btn"
+              onClick={() => finish.mutate({ id: session.id })}
+            >
+              <Check size={16} /> Concluir treino
+            </button>
+          ) : (
+            <StatusPill tone="success">
+              <Check size={12} /> Finalizado
+            </StatusPill>
+          )
+        }
+      />
+      <div className="mf-session-metrics">
+        <Metric label="Volume" value={Math.round(session.volumeKg)} unit="kg" tone="blue" />
+        <Metric label="Séries" value={session.totalSets} unit="concluídas" tone="lime" />
+        <Metric
+          label="Gasto estimado"
+          value={session.estimatedKcal != null ? Math.round(session.estimatedKcal) : '—'}
+          unit="kcal"
+          tone="orange"
         />
-      ))}
+      </div>
+      <div className="mf-session-list">
+        {session.exercises.map((exercise) => (
+          <ExerciseBlock
+            key={exercise.id}
+            session={session}
+            exercise={exercise}
+            readOnly={readOnly}
+            onChanged={invalidate}
+          />
+        ))}
 
-      {!readOnly && <AddExercise onChanged={invalidate} session={session} />}
+        {session.exercises.length === 0 && (
+          <div className="mf-empty">Adicione um exercício para começar a sessão.</div>
+        )}
+
+        {!readOnly && <AddExercise onChanged={invalidate} session={session} />}
+      </div>
     </div>
   );
 }
@@ -96,21 +115,38 @@ function ExerciseBlock({
   );
 
   return (
-    <section className="rounded-lg border border-zinc-200 p-4 dark:border-zinc-800">
-      <h3 className="font-semibold">{exercise.name}</h3>
-      <ol className="mt-2 flex flex-col gap-1">
+    <Card className="mf-exercise-block">
+      <div className="mf-exercise-head">
+        <span>
+          <Dumbbell size={19} />
+        </span>
+        <div>
+          <p className="mf-eyebrow">Exercício</p>
+          <h3>{exercise.name}</h3>
+        </div>
+        <StatusPill>{sets.length} séries</StatusPill>
+      </div>
+      <ol className="mf-set-list">
         {sets.map((set, index) => (
-          <li key={set.id} className="flex items-center justify-between text-sm">
+          <li key={set.id}>
+            <span className="mf-set-number">{String(index + 1).padStart(2, '0')}</span>
             <span>
-              #{index + 1} — {set.reps} reps × {set.weightKg} kg
+              <strong>{set.weightKg}</strong>
+              <small>kg</small>
             </span>
+            <span>
+              <strong>{set.reps}</strong>
+              <small>reps</small>
+            </span>
+            <Check size={15} />
             {!readOnly && (
               <button
                 type="button"
-                className="text-red-600 underline"
+                className="mf-entry-remove"
+                aria-label="Remover série"
                 onClick={() => removeSet.mutate({ sessionId: session.id, setId: set.id })}
               >
-                remover
+                <Trash2 size={14} />
               </button>
             )}
           </li>
@@ -125,7 +161,7 @@ function ExerciseBlock({
           onAdded={onChanged}
         />
       )}
-    </section>
+    </Card>
   );
 }
 
@@ -169,7 +205,7 @@ function SetForm({
 
   return (
     <form
-      className="mt-2 flex items-end gap-2"
+      className="mf-set-form"
       onSubmit={(e) => {
         e.preventDefault();
         addSet.mutate({
@@ -182,37 +218,37 @@ function SetForm({
         });
       }}
     >
-      <label className="flex flex-col text-xs">
+      <label className="mf-field">
         Reps
         <input
           type="number"
           min="1"
-          className="w-20 rounded border border-zinc-300 px-2 py-1 dark:border-zinc-700 dark:bg-zinc-900"
+          className="mf-input w-24"
           value={reps}
           onChange={(e) => setReps(e.target.value)}
           required
         />
       </label>
-      <label className="flex flex-col text-xs">
+      <label className="mf-field">
         Carga (kg)
         <input
           type="number"
           min="0"
           step="any"
-          className="w-24 rounded border border-zinc-300 px-2 py-1 dark:border-zinc-700 dark:bg-zinc-900"
+          className="mf-input w-28"
           value={weight}
           onChange={(e) => setWeight(e.target.value)}
           required
         />
       </label>
-      <button
-        type="submit"
-        disabled={addSet.isPending}
-        className="rounded bg-zinc-900 px-3 py-1 text-sm text-white disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900"
-      >
-        ✓ Série feita
+      <button type="submit" disabled={addSet.isPending} className="mf-btn">
+        <Check size={15} /> Série feita
       </button>
-      {resting > 0 && <span className="text-sm text-zinc-500">descanso: {resting}s</span>}
+      {resting > 0 && (
+        <span className="mf-rest-timer">
+          <Clock3 size={14} /> {resting}s
+        </span>
+      )}
     </form>
   );
 }
@@ -228,22 +264,32 @@ function AddExercise({ session, onChanged }: { session: SessionDetail; onChanged
   const existing = new Set(session.exercises.map((e) => e.id));
 
   return (
-    <div className="rounded-lg border border-dashed border-zinc-300 p-4 dark:border-zinc-700">
-      <input
-        placeholder="Adicionar exercício à sessão…"
-        className="w-full rounded border border-zinc-300 px-2 py-1 text-sm dark:border-zinc-700 dark:bg-zinc-900"
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-      />
+    <div className="mf-add-exercise">
+      <div>
+        <Plus size={18} />
+        <div>
+          <strong>Adicionar exercício</strong>
+          <span>Busque na biblioteca do MotusFit</span>
+        </div>
+      </div>
+      <label>
+        <Search size={15} />
+        <input
+          placeholder="Nome do exercício…"
+          className="mf-input"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+        />
+      </label>
       {query.length > 0 && (
-        <ul className="mt-1">
+        <ul className="mf-exercise-results">
           {(searchQuery.data ?? [])
             .filter((exercise) => !existing.has(exercise.id))
             .map((exercise) => (
               <li key={exercise.id}>
                 <button
                   type="button"
-                  className="w-full rounded px-2 py-1 text-left text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                  className="mf-food-result"
                   onClick={() => {
                     // Primeiro set "âncora" adiciona o exercício à sessão
                     addSet.mutate({
@@ -257,7 +303,7 @@ function AddExercise({ session, onChanged }: { session: SessionDetail; onChanged
                     setQuery('');
                   }}
                 >
-                  {exercise.name}
+                  <Dumbbell size={14} /> {exercise.name}
                 </button>
               </li>
             ))}

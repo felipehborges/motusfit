@@ -208,7 +208,7 @@ export function RoutineForm({
 
   return (
     <form
-      className="flex flex-col gap-6 rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-950 sm:p-6"
+      className="mf-routine-form"
       onSubmit={(event) => {
         event.preventDefault();
         const payload = {
@@ -444,7 +444,7 @@ function NewExerciseForm({ onDone }: { onDone: (exercise: Exercise | null) => vo
   );
 
   return (
-    <div className="mt-4 flex flex-wrap items-end gap-3 rounded-lg border border-dashed border-zinc-300 p-3 dark:border-zinc-700">
+    <div className="mf-new-exercise-form">
       <label className="flex min-w-48 flex-1 flex-col gap-1 text-xs font-medium">
         Nome do exercício
         <input

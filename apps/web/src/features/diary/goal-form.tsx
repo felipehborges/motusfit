@@ -40,7 +40,7 @@ export function GoalForm({
 
   if (!open) {
     return (
-      <button type="button" className="text-sm underline" onClick={() => setOpen(true)}>
+      <button type="button" className="mf-btn mf-btn-secondary" onClick={() => setOpen(true)}>
         {goal ? 'Editar meta' : 'Definir meta'}
       </button>
     );
@@ -48,7 +48,7 @@ export function GoalForm({
 
   return (
     <form
-      className="flex flex-wrap items-end gap-2"
+      className="mf-goal-form"
       onSubmit={(e) => {
         e.preventDefault();
         setGoal.mutate({
@@ -61,27 +61,23 @@ export function GoalForm({
       }}
     >
       {FIELDS.map(([key, label]) => (
-        <label key={key} className="flex flex-col text-xs">
+        <label key={key} className="mf-field">
           {label}
           <input
             type="number"
             min="1"
             step="any"
-            className="w-20 rounded border border-zinc-300 px-2 py-1 dark:border-zinc-700 dark:bg-zinc-900"
+            className="mf-input w-24"
             value={values[key]}
             onChange={(e) => setValues((v) => ({ ...v, [key]: e.target.value }))}
             required
           />
         </label>
       ))}
-      <button
-        type="submit"
-        disabled={setGoal.isPending}
-        className="rounded bg-zinc-900 px-3 py-1 text-sm text-white disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900"
-      >
+      <button type="submit" disabled={setGoal.isPending} className="mf-btn">
         Salvar
       </button>
-      <button type="button" className="text-sm underline" onClick={() => setOpen(false)}>
+      <button type="button" className="mf-btn mf-btn-ghost" onClick={() => setOpen(false)}>
         cancelar
       </button>
     </form>

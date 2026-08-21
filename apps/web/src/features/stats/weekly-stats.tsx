@@ -1,6 +1,8 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
+import { Activity, Dumbbell, Flame, TrendingUp } from 'lucide-react';
+import { Card, Metric, PageHeader, SectionHeader, StatusPill } from '@/components/ui';
 import { api } from '@/lib/api';
 
 const MUSCLE_LABELS: Record<string, string> = {
@@ -14,77 +16,116 @@ const MUSCLE_LABELS: Record<string, string> = {
   core: 'Core',
   other: 'Outro',
 };
-
 const WEEKDAY_LABELS = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
 
 export function WeeklyStats({ date }: { date: string }) {
   const statsQuery = useQuery(api.stats.weekly.queryOptions({ input: { date } }));
-
-  if (statsQuery.isPending) return <p>Carregando estatísticas…</p>;
-  if (statsQuery.isError) return <p className="text-red-600">Erro ao carregar estatísticas.</p>;
+  if (statsQuery.isPending) return <p className="mf-loading">Calculando sua evolução…</p>;
+  if (statsQuery.isError) return <p className="text-red-400">Erro ao carregar estatísticas.</p>;
 
   const stats = statsQuery.data;
   const maxKcal = Math.max(...stats.kcalByDay.map((d) => d.kcal), 1);
   const maxSets = Math.max(...stats.setsByMuscleGroup.map((g) => g.sets), 1);
+  const activeDays = stats.kcalByDay.filter((day) => day.kcal > 0).length;
 
   return (
-    <div className="flex w-full max-w-2xl flex-col gap-6">
-      <section className="rounded-lg border border-zinc-200 p-4 dark:border-zinc-800">
-        <h2 className="text-lg font-semibold">Semana de {stats.weekStart}</h2>
-        <dl className="mt-2 grid grid-cols-3 gap-2 text-center">
-          <div className="rounded bg-zinc-50 p-2 dark:bg-zinc-900">
-            <dt className="text-xs text-zinc-500">Sessões</dt>
-            <dd className="font-semibold">{stats.workoutSessions}</dd>
-          </div>
-          <div className="rounded bg-zinc-50 p-2 dark:bg-zinc-900">
-            <dt className="text-xs text-zinc-500">Volume total</dt>
-            <dd className="font-semibold">{Math.round(stats.totalVolumeKg)} kg</dd>
-          </div>
-          <div className="rounded bg-zinc-50 p-2 dark:bg-zinc-900">
-            <dt className="text-xs text-zinc-500">kcal treino</dt>
-            <dd className="font-semibold">{Math.round(stats.workoutKcal)}</dd>
-          </div>
-        </dl>
-      </section>
+    <div>
+      <PageHeader
+        eyebrow="Análise semanal"
+        title="Evolução em números."
+        description="Entenda o que você fez, onde está avançando e qual é o próximo movimento."
+        action={
+          <StatusPill tone="success">
+            <TrendingUp size={12} /> Semana ativa
+          </StatusPill>
+        }
+      />
 
-      <section className="rounded-lg border border-zinc-200 p-4 dark:border-zinc-800">
-        <h3 className="font-semibold">Calorias por dia</h3>
-        <div className="mt-3 flex items-end gap-2" style={{ height: 120 }}>
-          {stats.kcalByDay.map((day, index) => (
-            <div key={day.date} className="flex flex-1 flex-col items-center gap-1">
-              <div
-                className="w-full rounded-t bg-zinc-900 dark:bg-zinc-100"
-                style={{ height: `${Math.max((day.kcal / maxKcal) * 100, day.kcal > 0 ? 4 : 0)}%` }}
-                title={`${Math.round(day.kcal)} kcal`}
-              />
-              <span className="text-xs text-zinc-500">{WEEKDAY_LABELS[index]}</span>
-            </div>
-          ))}
+      <div className="mf-stats-metrics">
+        <Metric label="Sessões" value={stats.workoutSessions} unit="treinos" tone="lime" />
+        <Metric
+          label="Volume total"
+          value={Math.round(stats.totalVolumeKg).toLocaleString('pt-BR')}
+          unit="kg"
+          tone="blue"
+        />
+        <Metric
+          label="Energia de treino"
+          value={Math.round(stats.workoutKcal)}
+          unit="kcal"
+          tone="orange"
+        />
+        <Metric label="Dias registrados" value={activeDays} unit="de 7" />
+      </div>
+
+      <div className="mf-stats-grid">
+        <Card className="mf-chart-card mf-kcal-chart">
+          <SectionHeader
+            eyebrow="Nutrição"
+            title="Calorias por dia"
+            description={`Semana iniciada em ${stats.weekStart}`}
+            action={<Flame size={19} />}
+          />
+          <div className="mf-bar-chart" role="img" aria-label="Gráfico de calorias por dia">
+            {stats.kcalByDay.map((day, index) => {
+              const height = Math.max((day.kcal / maxKcal) * 100, day.kcal > 0 ? 5 : 2);
+              return (
+                <div key={day.date} className="mf-bar-column">
+                  <span className="mf-bar-value">{day.kcal > 0 ? Math.round(day.kcal) : ''}</span>
+                  <div className="mf-bar-track">
+                    <div className="mf-bar-fill" style={{ height: `${height}%` }} />
+                  </div>
+                  <span>{WEEKDAY_LABELS[index]}</span>
+                </div>
+              );
+            })}
+          </div>
+        </Card>
+
+        <Card className="mf-chart-card">
+          <SectionHeader
+            eyebrow="Distribuição"
+            title="Grupos musculares"
+            description="Séries concluídas na semana"
+            action={<Dumbbell size={19} />}
+          />
+          {stats.setsByMuscleGroup.length === 0 && (
+            <div className="mf-empty">Complete um treino para ver sua distribuição muscular.</div>
+          )}
+          <ul className="mf-muscle-list">
+            {stats.setsByMuscleGroup.map((group) => (
+              <li key={group.muscleGroup}>
+                <div>
+                  <span>{MUSCLE_LABELS[group.muscleGroup] ?? group.muscleGroup}</span>
+                  <strong>{group.sets} séries</strong>
+                </div>
+                <div className="mf-muscle-track">
+                  <div style={{ width: `${(group.sets / maxSets) * 100}%` }} />
+                </div>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      </div>
+
+      <Card className="mf-insight-card">
+        <span>
+          <Activity size={22} />
+        </span>
+        <div>
+          <p className="mf-eyebrow">Insight Motus</p>
+          <h3>
+            {stats.workoutSessions > 0
+              ? 'A consistência já está acontecendo.'
+              : 'Sua evolução começa no primeiro registro.'}
+          </h3>
+          <p>
+            {stats.workoutSessions > 0
+              ? `Você concluiu ${stats.workoutSessions} sessão nesta semana. Continue registrando para tornar sua progressão cada vez mais clara.`
+              : 'Escolha uma rotina, conclua sua primeira sessão e volte aqui para acompanhar os resultados.'}
+          </p>
         </div>
-      </section>
-
-      <section className="rounded-lg border border-zinc-200 p-4 dark:border-zinc-800">
-        <h3 className="font-semibold">Séries por grupo muscular</h3>
-        {stats.setsByMuscleGroup.length === 0 && (
-          <p className="mt-2 text-sm text-zinc-500">Nenhuma série completa nesta semana.</p>
-        )}
-        <ul className="mt-3 flex flex-col gap-2">
-          {stats.setsByMuscleGroup.map((group) => (
-            <li key={group.muscleGroup} className="flex items-center gap-2 text-sm">
-              <span className="w-20 shrink-0">
-                {MUSCLE_LABELS[group.muscleGroup] ?? group.muscleGroup}
-              </span>
-              <div className="h-3 flex-1 rounded bg-zinc-100 dark:bg-zinc-800">
-                <div
-                  className="h-3 rounded bg-zinc-900 dark:bg-zinc-100"
-                  style={{ width: `${(group.sets / maxSets) * 100}%` }}
-                />
-              </div>
-              <span className="w-8 text-right text-zinc-500">{group.sets}</span>
-            </li>
-          ))}
-        </ul>
-      </section>
+      </Card>
     </div>
   );
 }

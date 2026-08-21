@@ -3,6 +3,8 @@
 import type { DiaryEntry, MealSlot } from '@motusfit/contracts';
 import { roundMacrosForDisplay } from '@motusfit/core';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Apple, Coffee, Moon, Sandwich, Trash2 } from 'lucide-react';
+import { Card, Metric, SectionHeader } from '@/components/ui';
 import { api } from '@/lib/api';
 import { AddEntryForm } from './add-entry-form';
 import { GoalForm } from './goal-form';
@@ -13,6 +15,13 @@ const SLOTS: { slot: MealSlot; label: string }[] = [
   { slot: 'dinner', label: 'Jantar' },
   { slot: 'snack', label: 'Lanches' },
 ];
+
+const SLOT_META = {
+  breakfast: { icon: Coffee, note: 'Comece com energia' },
+  lunch: { icon: Apple, note: 'Recarregue o seu dia' },
+  dinner: { icon: Moon, note: 'Feche o dia com equilíbrio' },
+  snack: { icon: Sandwich, note: 'Pequenas escolhas contam' },
+} as const;
 
 export function localToday(): string {
   const now = new Date();
@@ -32,61 +41,85 @@ export function DiaryDay({ date }: { date: string }) {
     api.nutrition.diary.remove.mutationOptions({ onSuccess: invalidateDay }),
   );
 
-  if (dayQuery.isPending) return <p>Carregando diário…</p>;
-  if (dayQuery.isError) return <p className="text-red-600">Erro ao carregar o diário.</p>;
+  if (dayQuery.isPending) return <p className="mf-loading">Carregando diário…</p>;
+  if (dayQuery.isError) return <p className="text-red-400">Erro ao carregar o diário.</p>;
 
   const day = dayQuery.data;
   const totals = roundMacrosForDisplay(day.totals);
 
   return (
-    <div className="flex w-full max-w-2xl flex-col gap-6">
-      <section className="rounded-lg border border-zinc-200 p-4 dark:border-zinc-800">
-        <div className="flex items-baseline justify-between">
-          <h2 className="text-lg font-semibold">Hoje ({date})</h2>
-          <GoalForm goal={day.goal} date={date} onSaved={invalidateDay} />
+    <div className="mf-diary">
+      <Card className="mf-macro-card">
+        <SectionHeader
+          eyebrow="Nutrição"
+          title="Seus macros"
+          description={`Acompanhamento de ${new Date(`${date}T12:00:00`).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long' })}`}
+          action={<GoalForm goal={day.goal} date={date} onSaved={invalidateDay} />}
+        />
+        <div className="mf-macro-grid">
+          <Metric
+            label="Calorias"
+            value={totals.kcal}
+            unit={`/ ${day.goal?.kcal ?? '—'} kcal`}
+            tone="lime"
+          />
+          <Metric
+            label="Proteínas"
+            value={totals.proteinG}
+            unit={`/ ${day.goal?.proteinG ?? '—'} g`}
+            tone="blue"
+          />
+          <Metric
+            label="Carboidratos"
+            value={totals.carbsG}
+            unit={`/ ${day.goal?.carbsG ?? '—'} g`}
+            tone="orange"
+          />
+          <Metric label="Gorduras" value={totals.fatG} unit={`/ ${day.goal?.fatG ?? '—'} g`} />
         </div>
-        <dl className="mt-2 grid grid-cols-4 gap-2 text-center">
-          {(
-            [
-              ['kcal', totals.kcal, day.goal?.kcal],
-              ['Proteína', totals.proteinG, day.goal?.proteinG],
-              ['Carbo', totals.carbsG, day.goal?.carbsG],
-              ['Gordura', totals.fatG, day.goal?.fatG],
-            ] as const
-          ).map(([label, value, goal]) => (
-            <div key={label} className="rounded bg-zinc-50 p-2 dark:bg-zinc-900">
-              <dt className="text-xs text-zinc-500">{label}</dt>
-              <dd className="font-semibold">
-                {value}
-                {goal != null && <span className="text-xs text-zinc-500"> / {goal}</span>}
-              </dd>
-            </div>
-          ))}
-        </dl>
-      </section>
+      </Card>
 
-      {SLOTS.map(({ slot, label }) => {
-        const entries = day.entries.filter((e) => e.mealSlot === slot);
-        return (
-          <section
-            key={slot}
-            className="rounded-lg border border-zinc-200 p-4 dark:border-zinc-800"
-          >
-            <h3 className="font-semibold">{label}</h3>
-            <ul className="mt-2 flex flex-col gap-1">
-              {entries.length === 0 && <li className="text-sm text-zinc-500">Nenhuma entrada.</li>}
-              {entries.map((entry) => (
-                <EntryRow
-                  key={entry.id}
-                  entry={entry}
-                  onRemove={() => removeEntry.mutate({ id: entry.id })}
-                />
-              ))}
-            </ul>
-            <AddEntryForm date={date} mealSlot={slot} onAdded={invalidateDay} />
-          </section>
-        );
-      })}
+      <SectionHeader
+        eyebrow="Diário alimentar"
+        title="Refeições do dia"
+        description="Registre o que comeu sem perder o fluxo."
+      />
+      <div className="mf-meal-grid">
+        {SLOTS.map(({ slot, label }) => {
+          const entries = day.entries.filter((e) => e.mealSlot === slot);
+          const Icon = SLOT_META[slot].icon;
+          return (
+            <Card key={slot} className="mf-meal-card">
+              <div className="mf-meal-head">
+                <span className="mf-meal-icon">
+                  <Icon size={18} />
+                </span>
+                <div>
+                  <h3>{label}</h3>
+                  <p>{SLOT_META[slot].note}</p>
+                </div>
+                <strong>
+                  {Math.round(entries.reduce((sum, item) => sum + item.macros.kcal, 0))}
+                  <small> kcal</small>
+                </strong>
+              </div>
+              <ul className="mf-entry-list">
+                {entries.length === 0 && (
+                  <li className="mf-empty-meal">Nenhum alimento registrado ainda.</li>
+                )}
+                {entries.map((entry) => (
+                  <EntryRow
+                    key={entry.id}
+                    entry={entry}
+                    onRemove={() => removeEntry.mutate({ id: entry.id })}
+                  />
+                ))}
+              </ul>
+              <AddEntryForm date={date} mealSlot={slot} onAdded={invalidateDay} />
+            </Card>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -94,22 +127,24 @@ export function DiaryDay({ date }: { date: string }) {
 function EntryRow({ entry, onRemove }: { entry: DiaryEntry; onRemove: () => void }) {
   const macros = roundMacrosForDisplay(entry.macros);
   return (
-    <li className="flex items-center justify-between gap-2 text-sm">
-      <span>
-        {entry.food.name} — {entry.quantity}{' '}
-        {entry.food.servingUnit === 'unit' ? 'un' : entry.food.servingUnit}
+    <li className="mf-entry-row">
+      <span className="mf-entry-bullet" />
+      <span className="mf-entry-name">
+        <strong>{entry.food.name}</strong>
+        <small>
+          {entry.quantity} {entry.food.servingUnit === 'unit' ? 'un' : entry.food.servingUnit} · P{' '}
+          {macros.proteinG} · C {macros.carbsG} · G {macros.fatG}
+        </small>
       </span>
-      <span className="flex items-center gap-3 text-zinc-500">
-        {macros.kcal} kcal · P {macros.proteinG} · C {macros.carbsG} · G {macros.fatG}
-        <button
-          type="button"
-          onClick={onRemove}
-          aria-label={`Remover ${entry.food.name}`}
-          className="text-red-600 hover:underline"
-        >
-          remover
-        </button>
-      </span>
+      <span className="mf-entry-kcal">{macros.kcal} kcal</span>
+      <button
+        type="button"
+        onClick={onRemove}
+        aria-label={`Remover ${entry.food.name}`}
+        className="mf-entry-remove"
+      >
+        <Trash2 size={14} />
+      </button>
     </li>
   );
 }

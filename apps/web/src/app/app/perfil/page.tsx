@@ -1,11 +1,16 @@
 'use client';
 
+import { PageHeader } from '@/components/ui';
 import { ProfileForm } from '@/features/profile/profile-form';
 
 export default function ProfilePage() {
   return (
-    <section className="w-full max-w-2xl">
-      <h2 className="mb-4 text-lg font-semibold">Perfil</h2>
+    <section>
+      <PageHeader
+        eyebrow="Configurações"
+        title="Seu perfil fitness."
+        description="Dados simples que ajudam o MotusFit a calcular e personalizar melhor sua jornada."
+      />
       <ProfileForm />
     </section>
   );
