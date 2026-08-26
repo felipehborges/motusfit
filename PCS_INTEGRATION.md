@@ -3,7 +3,7 @@
 Atualizado em: 2026-08-26 (America/Sao_Paulo)  
 Dispositivo: PC de trabalho (`SWINNT-NOTE0085`)  
 Branch: `master`  
-Sincronização: limpa e alinhada com `origin/master`. O trabalho principal está no commit `3c39ed7`; este estado final do handoff segue em um commit posterior de documentação.
+Sincronização: atualização do handoff pronta para commit e push em `origin/master`.
 
 ## Objetivo atual
 
@@ -19,6 +19,7 @@ Publicar o MotusFit para uso real no navegador do celular durante o treino, com 
 - Site e API funcionam localmente com Node 24; web em `:3000` e API em `:3001`.
 - O banco local é PGlite; produção deve obrigatoriamente receber `DATABASE_URL` persistente do Neon com SSL.
 - A skill portátil `.agents/skills/pc-integration/SKILL.md` e o `AGENTS.md` da raiz foram criados. Todo agente deve ler e atualizar este arquivo em cada tarefa.
+- Foi preparado um prompt curto para replicar a mesma skill, `AGENTS.md` e arquivo de handoff nos outros projetos do usuário.
 
 ## Bloqueador de publicação identificado
 
