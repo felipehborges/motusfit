@@ -4,7 +4,7 @@ import { Providers } from '@/lib/providers';
 
 export const metadata: Metadata = {
   title: 'MotusFit',
-  description: 'Alimentação e treino em um só lugar.',
+  description: 'Treino de força, rotinas e evolução em um só lugar.',
 };
 
 export default function RootLayout({

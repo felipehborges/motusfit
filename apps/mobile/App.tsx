@@ -2,12 +2,11 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { TodayCard } from './src/features/dashboard/today-card';
-import { DiaryScreen, localToday } from './src/features/diary/diary-screen';
 import { ProfileScreen } from './src/features/profile/profile-screen';
 import { WeeklyStatsScreen } from './src/features/stats/weekly-stats-screen';
 import { SessionScreen } from './src/features/workout/session-screen';
 import { WorkoutsScreen } from './src/features/workout/workouts-screen';
+import { localToday } from './src/lib/date';
 
 // Navegação por estado; Expo Router entra quando as telas se multiplicarem (ADR 0006).
 export default function App() {
@@ -21,10 +20,10 @@ export default function App() {
   );
 }
 
-type Tab = 'diary' | 'workouts' | 'stats' | 'profile';
+type Tab = 'workouts' | 'stats' | 'profile';
 
 function Root() {
-  const [tab, setTab] = useState<Tab>('diary');
+  const [tab, setTab] = useState<Tab>('workouts');
   const [openSessionId, setOpenSessionId] = useState<string | null>(null);
 
   return (
@@ -40,7 +39,6 @@ function Root() {
           <View style={styles.tabs}>
             {(
               [
-                ['diary', 'Diário'],
                 ['workouts', 'Treinos'],
                 ['stats', 'Estatísticas'],
                 ['profile', 'Perfil'],
@@ -55,12 +53,6 @@ function Root() {
               </Pressable>
             ))}
           </View>
-          {tab === 'diary' && (
-            <>
-              <TodayCard date={localToday()} />
-              <DiaryScreen />
-            </>
-          )}
           {tab === 'workouts' && <WorkoutsScreen onOpenSession={setOpenSessionId} />}
           {tab === 'stats' && <WeeklyStatsScreen date={localToday()} />}
           {tab === 'profile' && <ProfileScreen />}

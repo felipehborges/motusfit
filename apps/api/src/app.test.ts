@@ -52,6 +52,13 @@ describe('GET /api/v1/health', () => {
   });
 });
 
+describe('nutrição em pausa', () => {
+  it('desativa as rotas nutricionais por padrão', async () => {
+    const res = await app.request('/api/v1/nutrition/foods');
+    expect(res.status).toBe(410);
+  });
+});
+
 describe('auth + perfil', () => {
   it('bloqueia perfil sem sessão', async () => {
     const res = await app.request('/api/v1/identity/profile');

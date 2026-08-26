@@ -67,7 +67,6 @@ export function SessionScreen({ sessionId, onBack }: { sessionId: string; onBack
       <Text style={styles.heading}>{session.title}</Text>
       <Text style={styles.muted}>
         {Math.round(session.volumeKg)} kg de volume · {session.totalSets} séries
-        {session.estimatedKcal != null ? ` · ~${Math.round(session.estimatedKcal)} kcal` : ''}
       </Text>
 
       {session.exercises.map((exercise) => (

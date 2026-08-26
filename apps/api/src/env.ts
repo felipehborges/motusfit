@@ -13,6 +13,12 @@ const envSchema = z
       .string()
       .default('http://localhost:3000')
       .transform((value) => value.split(',').map((origin) => origin.trim())),
+    // Nutrição fica em pausa enquanto o produto se concentra em treino. Pode ser
+    // reativada sem migration ao definir explicitamente esta flag como true.
+    NUTRITION_ENABLED: z
+      .string()
+      .default('false')
+      .transform((v) => v === 'true'),
     // Billing (ADR 0008): opt-in — ausente/false, app roda com todo mundo em plano free
     BILLING_ENABLED: z
       .string()

@@ -1,8 +1,7 @@
 'use client';
 
-import { roundMacrosForDisplay } from '@motusfit/core';
 import { useQuery } from '@tanstack/react-query';
-import { Activity, Flame, Target, Trophy } from 'lucide-react';
+import { Activity, Dumbbell, Target, Trophy } from 'lucide-react';
 import Link from 'next/link';
 import type { CSSProperties } from 'react';
 import { Card, Metric, StatusPill } from '@/components/ui';
@@ -13,42 +12,32 @@ export function TodayCard({ date }: { date: string }) {
 
   if (!statsQuery.data) return <div className="mf-loading">Preparando seu resumo…</div>;
   const stats = statsQuery.data;
-  const consumed = roundMacrosForDisplay(stats.consumed);
-  const progress = stats.goal
-    ? Math.min(Math.round((consumed.kcal / stats.goal.kcal) * 100), 100)
-    : 0;
 
   return (
     <div className="mf-dashboard-grid">
       <Card className="mf-energy-card">
         <div className="mf-energy-copy">
           <StatusPill tone="success">
-            <Activity size={12} /> Meta diária
+            <Activity size={12} /> Foco do dia
           </StatusPill>
-          <h2>Energia em equilíbrio</h2>
-          <p>Você está construindo o dia refeição por refeição. Mantenha o ritmo.</p>
+          <h2>Construa sua força.</h2>
+          <p>Registre seu treino, acompanhe o volume e faça da consistência o seu progresso.</p>
           <div className="mf-energy-balance">
-            <strong>
-              {stats.remainingKcal == null ? '—' : Math.abs(Math.round(stats.remainingKcal))}
-            </strong>
+            <strong>{stats.workoutSessions}</strong>
             <span>
-              {stats.remainingKcal != null && stats.remainingKcal < 0
-                ? 'kcal acima'
-                : 'kcal restantes'}
+              treino{stats.workoutSessions === 1 ? '' : 's'} concluído
+              {stats.workoutSessions === 1 ? '' : 's'} hoje
             </span>
           </div>
           <Link href="/app/treinos" className="mf-btn">
-            Ver meus treinos
+            <Dumbbell size={16} /> Ir para treinos
           </Link>
         </div>
-        <div
-          className="mf-progress-ring"
-          style={{ '--progress': `${progress * 3.6}deg` } as CSSProperties}
-        >
+        <div className="mf-progress-ring" style={{ '--progress': '220deg' } as CSSProperties}>
           <div>
-            <Flame size={22} />
-            <strong>{consumed.kcal}</strong>
-            <span>de {stats.goal?.kcal ?? '—'} kcal</span>
+            <Dumbbell size={22} />
+            <strong>{stats.workoutSessions}</strong>
+            <span>sessões hoje</span>
           </div>
         </div>
       </Card>
@@ -63,12 +52,7 @@ export function TodayCard({ date }: { date: string }) {
         </div>
         <div className="mf-performance-metrics">
           <Metric label="Treinos" value={stats.workoutSessions} tone="lime" />
-          <Metric
-            label="Queima estimada"
-            value={Math.round(stats.workoutKcal)}
-            unit="kcal"
-            tone="orange"
-          />
+          <Metric label="Próximo passo" value="Treinar" tone="blue" />
         </div>
         <div className="mf-streak-row">
           <Target size={16} />

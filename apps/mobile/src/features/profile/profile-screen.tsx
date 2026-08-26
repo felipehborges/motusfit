@@ -7,15 +7,11 @@ export function ProfileScreen() {
   const queryClient = useQueryClient();
   const profileQuery = useQuery(api.identity.profile.get.queryOptions());
   const [displayName, setDisplayName] = useState('');
-  const [bodyWeightKg, setBodyWeightKg] = useState('');
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
     if (!profileQuery.data) return;
     setDisplayName(profileQuery.data.displayName);
-    setBodyWeightKg(
-      profileQuery.data.bodyWeightKg != null ? String(profileQuery.data.bodyWeightKg) : '',
-    );
   }, [profileQuery.data]);
 
   const saveProfile = useMutation(
@@ -34,16 +30,6 @@ export function ProfileScreen() {
       <Text style={styles.label}>Nome</Text>
       <TextInput style={styles.input} value={displayName} onChangeText={setDisplayName} />
 
-      <Text style={styles.label}>Peso corporal (kg)</Text>
-      <TextInput
-        style={styles.input}
-        value={bodyWeightKg}
-        onChangeText={setBodyWeightKg}
-        keyboardType="decimal-pad"
-        placeholder="ex.: 78.5"
-      />
-      <Text style={styles.hint}>Usado para estimar o gasto calórico do treino.</Text>
-
       <Pressable
         style={styles.button}
         disabled={saveProfile.isPending || !displayName}
@@ -51,7 +37,6 @@ export function ProfileScreen() {
           setSaved(false);
           saveProfile.mutate({
             displayName,
-            bodyWeightKg: bodyWeightKg === '' ? null : Number(bodyWeightKg),
           });
         }}
       >
@@ -72,7 +57,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
   },
-  hint: { fontSize: 12, color: '#71717a' },
   button: {
     marginTop: 16,
     backgroundColor: '#18181b',

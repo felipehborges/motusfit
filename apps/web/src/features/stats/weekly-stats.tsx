@@ -1,7 +1,7 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { Activity, Dumbbell, Flame, TrendingUp } from 'lucide-react';
+import { Activity, Dumbbell, TrendingUp } from 'lucide-react';
 import { Card, Metric, PageHeader, SectionHeader, StatusPill } from '@/components/ui';
 import { api } from '@/lib/api';
 
@@ -16,17 +16,13 @@ const MUSCLE_LABELS: Record<string, string> = {
   core: 'Core',
   other: 'Outro',
 };
-const WEEKDAY_LABELS = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
-
 export function WeeklyStats({ date }: { date: string }) {
   const statsQuery = useQuery(api.stats.weekly.queryOptions({ input: { date } }));
   if (statsQuery.isPending) return <p className="mf-loading">Calculando sua evolução…</p>;
   if (statsQuery.isError) return <p className="text-red-400">Erro ao carregar estatísticas.</p>;
 
   const stats = statsQuery.data;
-  const maxKcal = Math.max(...stats.kcalByDay.map((d) => d.kcal), 1);
   const maxSets = Math.max(...stats.setsByMuscleGroup.map((g) => g.sets), 1);
-  const activeDays = stats.kcalByDay.filter((day) => day.kcal > 0).length;
 
   return (
     <div>
@@ -49,44 +45,15 @@ export function WeeklyStats({ date }: { date: string }) {
           unit="kg"
           tone="blue"
         />
-        <Metric
-          label="Energia de treino"
-          value={Math.round(stats.workoutKcal)}
-          unit="kcal"
-          tone="orange"
-        />
-        <Metric label="Dias registrados" value={activeDays} unit="de 7" />
+        <Metric label="Dias registrados" value={stats.activeDays} unit="de 7" />
       </div>
 
       <div className="mf-stats-grid">
-        <Card className="mf-chart-card mf-kcal-chart">
-          <SectionHeader
-            eyebrow="Nutrição"
-            title="Calorias por dia"
-            description={`Semana iniciada em ${stats.weekStart}`}
-            action={<Flame size={19} />}
-          />
-          <div className="mf-bar-chart" role="img" aria-label="Gráfico de calorias por dia">
-            {stats.kcalByDay.map((day, index) => {
-              const height = Math.max((day.kcal / maxKcal) * 100, day.kcal > 0 ? 5 : 2);
-              return (
-                <div key={day.date} className="mf-bar-column">
-                  <span className="mf-bar-value">{day.kcal > 0 ? Math.round(day.kcal) : ''}</span>
-                  <div className="mf-bar-track">
-                    <div className="mf-bar-fill" style={{ height: `${height}%` }} />
-                  </div>
-                  <span>{WEEKDAY_LABELS[index]}</span>
-                </div>
-              );
-            })}
-          </div>
-        </Card>
-
         <Card className="mf-chart-card">
           <SectionHeader
             eyebrow="Distribuição"
             title="Grupos musculares"
-            description="Séries concluídas na semana"
+            description={`Séries concluídas desde ${stats.weekStart}`}
             action={<Dumbbell size={19} />}
           />
           {stats.setsByMuscleGroup.length === 0 && (

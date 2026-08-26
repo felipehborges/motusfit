@@ -68,7 +68,6 @@ export function WorkoutsScreen({ onOpenSession }: { onOpenSession: (id: string) 
           <Text style={styles.muted}>
             {session.startedAt.slice(0, 10)} · {session.totalSets} séries ·{' '}
             {Math.round(session.volumeKg)} kg
-            {session.estimatedKcal != null ? ` · ~${Math.round(session.estimatedKcal)} kcal` : ''}
           </Text>
         </Pressable>
       ))}

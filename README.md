@@ -1,6 +1,6 @@
 # MotusFit
 
-App fitness que unifica **controle alimentar** (estilo Yazio) e **controle de treinos** (estilo Hevy) — Web, iOS e Android a partir de um monorepo TypeScript.
+App de treino de força — rotinas, registro de séries, histórico e progresso — para Web, iOS e Android a partir de um monorepo TypeScript. O módulo nutricional permanece pausado e pode ser reativado posteriormente.
 
 ## Documentação
 

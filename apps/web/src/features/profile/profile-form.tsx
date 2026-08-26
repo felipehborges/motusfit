@@ -1,7 +1,7 @@
 'use client';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Check, Scale, ShieldCheck, UserRound } from 'lucide-react';
+import { Check, ShieldCheck, UserRound } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Card, SectionHeader, StatusPill } from '@/components/ui';
 import { api } from '@/lib/api';
@@ -10,15 +10,11 @@ export function ProfileForm() {
   const queryClient = useQueryClient();
   const profileQuery = useQuery(api.identity.profile.get.queryOptions());
   const [displayName, setDisplayName] = useState('');
-  const [bodyWeightKg, setBodyWeightKg] = useState('');
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
     if (!profileQuery.data) return;
     setDisplayName(profileQuery.data.displayName);
-    setBodyWeightKg(
-      profileQuery.data.bodyWeightKg != null ? String(profileQuery.data.bodyWeightKg) : '',
-    );
   }, [profileQuery.data]);
 
   const saveProfile = useMutation(
@@ -53,7 +49,6 @@ export function ProfileForm() {
             setSaved(false);
             saveProfile.mutate({
               displayName,
-              bodyWeightKg: bodyWeightKg === '' ? null : Number(bodyWeightKg),
             });
           }}
         >
@@ -81,22 +76,6 @@ export function ProfileForm() {
                 required
               />
             </span>
-          </label>
-          <label className="mf-field">
-            Peso corporal (kg)
-            <span className="mf-input-icon">
-              <Scale size={16} />
-              <input
-                type="number"
-                min="1"
-                step="0.1"
-                placeholder="ex.: 78.5"
-                className="mf-input"
-                value={bodyWeightKg}
-                onChange={(e) => setBodyWeightKg(e.target.value)}
-              />
-            </span>
-            <span className="mf-field-help">Usado para estimar o gasto calórico do treino.</span>
           </label>
           <button type="submit" disabled={saveProfile.isPending} className="mf-btn">
             Salvar

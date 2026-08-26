@@ -14,8 +14,6 @@ const MUSCLE_LABELS: Record<string, string> = {
   other: 'Outro',
 };
 
-const WEEKDAY_LABELS = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
-
 export function WeeklyStatsScreen({ date }: { date: string }) {
   const statsQuery = useQuery(api.stats.weekly.queryOptions({ input: { date } }));
 
@@ -35,7 +33,6 @@ export function WeeklyStatsScreen({ date }: { date: string }) {
   }
 
   const stats = statsQuery.data;
-  const maxKcal = Math.max(...stats.kcalByDay.map((d) => d.kcal), 1);
   const maxSets = Math.max(...stats.setsByMuscleGroup.map((g) => g.sets), 1);
 
   return (
@@ -52,28 +49,9 @@ export function WeeklyStatsScreen({ date }: { date: string }) {
             <Text style={styles.summaryValue}>{Math.round(stats.totalVolumeKg)} kg</Text>
           </View>
           <View style={styles.summaryBox}>
-            <Text style={styles.summaryLabel}>kcal treino</Text>
-            <Text style={styles.summaryValue}>{Math.round(stats.workoutKcal)}</Text>
+            <Text style={styles.summaryLabel}>Dias ativos</Text>
+            <Text style={styles.summaryValue}>{stats.activeDays} de 7</Text>
           </View>
-        </View>
-      </View>
-
-      <View style={styles.card}>
-        <Text style={styles.heading}>Calorias por dia</Text>
-        <View style={styles.barsRow}>
-          {stats.kcalByDay.map((day, index) => (
-            <View key={day.date} style={styles.barColumn}>
-              <View style={styles.barTrack}>
-                <View
-                  style={[
-                    styles.bar,
-                    { height: `${Math.max((day.kcal / maxKcal) * 100, day.kcal > 0 ? 4 : 0)}%` },
-                  ]}
-                />
-              </View>
-              <Text style={styles.barLabel}>{WEEKDAY_LABELS[index]}</Text>
-            </View>
-          ))}
         </View>
       </View>
 
@@ -121,11 +99,6 @@ const styles = StyleSheet.create({
   },
   summaryLabel: { fontSize: 11, color: '#71717a' },
   summaryValue: { fontWeight: '600' },
-  barsRow: { flexDirection: 'row', gap: 6, height: 120, alignItems: 'flex-end' },
-  barColumn: { flex: 1, alignItems: 'center', gap: 4, height: '100%', justifyContent: 'flex-end' },
-  barTrack: { flex: 1, width: '100%', justifyContent: 'flex-end' },
-  bar: { width: '100%', backgroundColor: '#18181b', borderRadius: 4 },
-  barLabel: { fontSize: 11, color: '#71717a' },
   muscleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   muscleLabel: { width: 72, fontSize: 13 },
   muscleTrack: { flex: 1, height: 10, borderRadius: 5, backgroundColor: '#f4f4f5' },

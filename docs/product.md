@@ -9,9 +9,13 @@ Especificação funcional do MVP e visão das fases seguintes. Cada feature aqui
 
 Paridade de funcionalidades entre plataformas no MVP; mobile é o cliente primário de uso diário.
 
+## Escopo ativo
+
+O produto está temporariamente focado em treino. Nutrição e qualquer cálculo/exibição de calorias permanecem preservados no código, mas desativados nas interfaces e nas rotas públicas por padrão.
+
 ## MVP
 
-### Nutrição
+### Nutrição (em pausa)
 
 | Feature | Descrição | Critérios de aceite |
 |---|---|---|
@@ -31,13 +35,12 @@ Paridade de funcionalidades entre plataformas no MVP; mobile é o cliente primá
 | Sessão de treino | Executar rotina (ou treino livre): registrar séries com reps, carga e descanso; concluir sessão | Sessão registra início/fim; séries marcadas como completas; valores da última sessão sugeridos |
 | Histórico | Lista de sessões concluídas com resumo (duração, volume, séries) | Ordenado por data; detalhe mostra todas as séries |
 | Volume | Volume por sessão e por exercício = Σ(carga × reps) das séries completas | Cálculo correto; exibido no resumo da sessão |
-| Gasto calórico estimado | Estimativa por sessão via METs (peso do usuário × MET × duração) | Fórmula documentada; exibida como estimativa |
-| Estatísticas semanais | Por semana: nº de sessões, volume total, séries por grupo muscular, kcal estimadas | Semana ISO (seg–dom); agregação correta em fronteiras de semana |
+| Estatísticas semanais | Por semana: nº de sessões, dias ativos, volume total e séries por grupo muscular | Semana ISO (seg–dom); agregação correta em fronteiras de semana |
 
 ### Transversal (MVP)
 
-- **Conta**: cadastro/login com e-mail+senha, sessão persistente, perfil (nome, peso corporal — usado no gasto calórico).
-- **Dashboard**: resumo do dia — kcal consumidas × meta (abatendo estimativa de treino), macros, treino do dia.
+- **Conta**: cadastro/login com e-mail+senha, sessão persistente e perfil.
+- **Dashboard**: resumo do treino do dia e atalho para iniciar uma sessão.
 - **Unidades**: kg e g no MVP (lb pós-MVP); campo de unidade já modelado.
 
 ## Fora do escopo do MVP (mas modelado para não travar depois)
@@ -52,5 +55,6 @@ Paridade de funcionalidades entre plataformas no MVP; mobile é o cliente primá
 
 ## Fluxos críticos (devem ser rápidos)
 
-1. **Registrar refeição repetida**: diário → refeição → recentes/favoritos → ajustar quantidade → salvar (≤ 4 toques).
-2. **Executar treino**: iniciar rotina → valores pré-preenchidos da última sessão → marcar série feita → timer de descanso → concluir.
+1. **Executar treino**: iniciar rotina → valores pré-preenchidos da última sessão → marcar série feita → timer de descanso → concluir.
+
+O fluxo de registrar refeições permanece documentado e coberto por teste desativado enquanto a nutrição estiver em pausa.

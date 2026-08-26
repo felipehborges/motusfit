@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 
-// Fluxo crítico nº 1 (docs/product.md): registrar uma refeição.
-test('signup → criar alimento → registrar refeição → totais do dia', async ({ page }) => {
+// Fluxo preservado para quando NUTRITION_ENABLED voltar a ser ativada.
+test.skip('signup → criar alimento → registrar refeição → totais do dia', async ({ page }) => {
   const unique = Date.now();
   const foodName = `Frango E2E ${unique}`;
 
@@ -11,7 +11,7 @@ test('signup → criar alimento → registrar refeição → totais do dia', asy
   await page.getByLabel('Senha').fill('senha-segura-123');
   await page.getByRole('button', { name: 'Criar conta' }).click();
 
-  await expect(page.getByRole('heading', { name: /Hoje/ })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /Seu treino, hoje/i })).toBeVisible();
 
   // Adicionar alimento novo no almoço (segunda seção)
   await page.getByRole('button', { name: '+ Adicionar alimento' }).nth(1).click();

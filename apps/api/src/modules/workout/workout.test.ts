@@ -144,7 +144,7 @@ describe('workout', () => {
     expect(await json<Routine[]>(c.get('/workout/routines'))).toHaveLength(0);
   });
 
-  it('sessão: iniciar de rotina, sets, volume, concluir com kcal estimada', async () => {
+  it('sessão: iniciar de rotina, sets, volume e conclusão', async () => {
     const c = api(await signUp('w3@motusfit.test'));
     await c.send('PUT', '/identity/profile', { displayName: 'W3', bodyWeightKg: 80 });
     const bench = await createBench(c);
@@ -188,8 +188,8 @@ describe('workout', () => {
     expect(finished.volumeKg).toBe(60 * 10 + 65 * 8);
     expect(finished.totalSets).toBe(2);
     expect(finished.finishedAt).not.toBeNull();
-    // kcal = 5.0 × 80 kg × duração(h) — duração ínfima no teste, mas não-nula
-    expect(finished.estimatedKcal).not.toBeNull();
+    // Cálculo calórico fica pausado enquanto o produto está no modo treino.
+    expect(finished.estimatedKcal).toBeNull();
 
     const blocked = await c.send('POST', `/workout/sessions/${session.id}/sets`, {
       sessionId: session.id,

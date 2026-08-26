@@ -47,7 +47,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           </span>
           <p className="mf-eyebrow">Consistência</p>
           <strong>Um passo por dia.</strong>
-          <span>Treino e alimentação no mesmo ritmo.</span>
+          <span>Treine com intenção, evolua com consistência.</span>
         </div>
       </aside>
 

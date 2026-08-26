@@ -52,6 +52,16 @@ export function createApp({ env, db, auth }: AppDeps): Hono {
     app.on(['GET', 'POST'], '/api/auth/*', (c) => auth.handler(c.req.raw));
   }
 
+  // O domínio permanece no código e no banco para uma retomada futura, mas a
+  // superfície pública fica indisponível no modo treino.
+  app.use('/api/v1/nutrition/*', async (c, next) => {
+    if (env.NUTRITION_ENABLED) return next();
+    return c.json(
+      { message: 'O acompanhamento nutricional está temporariamente desativado.' },
+      410,
+    );
+  });
+
   app.use('/api/v1/*', async (c, next) => {
     const user = await currentUser({ auth, db, env, request: c.req.raw });
     const { matched, response } = await openApiHandler.handle(c.req.raw, {

@@ -2,7 +2,7 @@
 
 import { PageHeader } from '@/components/ui';
 import { TodayCard } from '@/features/dashboard/today-card';
-import { DiaryDay, localToday } from '@/features/diary/diary-day';
+import { localToday } from '@/lib/date';
 
 export default function AppHome() {
   const date = localToday();
@@ -10,11 +10,10 @@ export default function AppHome() {
     <div>
       <PageHeader
         eyebrow="Resumo diário"
-        title="Seu ritmo, hoje."
-        description="Energia, nutrição e treino reunidos para você tomar decisões melhores ao longo do dia."
+        title="Seu treino, hoje."
+        description="Foque no próximo movimento, registre suas séries e acompanhe sua evolução."
       />
       <TodayCard date={date} />
-      <DiaryDay date={date} />
     </div>
   );
 }

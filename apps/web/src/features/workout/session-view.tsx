@@ -64,12 +64,6 @@ export function SessionView({
       <div className="mf-session-metrics">
         <Metric label="Volume" value={Math.round(session.volumeKg)} unit="kg" tone="blue" />
         <Metric label="Séries" value={session.totalSets} unit="concluídas" tone="lime" />
-        <Metric
-          label="Gasto estimado"
-          value={session.estimatedKcal != null ? Math.round(session.estimatedKcal) : '—'}
-          unit="kcal"
-          tone="orange"
-        />
       </div>
       <div className="mf-session-list">
         {session.exercises.map((exercise) => (

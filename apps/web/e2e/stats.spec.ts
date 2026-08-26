@@ -10,7 +10,7 @@ test('treino concluído aparece nas estatísticas da semana', async ({ page }) =
   await page.getByLabel('E-mail').fill(`e2e-s-${unique}@motusfit.test`);
   await page.getByLabel('Senha').fill('senha-segura-123');
   await page.getByRole('button', { name: 'Criar conta' }).click();
-  await expect(page.getByRole('heading', { name: /Hoje/ })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /Seu treino, hoje/i })).toBeVisible();
 
   await page.getByRole('link', { name: 'Treinos' }).click();
   await page.getByRole('button', { name: 'Nova rotina' }).click();

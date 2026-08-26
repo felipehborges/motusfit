@@ -9,6 +9,7 @@ import { loadEnv } from '../../env';
 const env = loadEnv({
   NODE_ENV: 'test',
   BETTER_AUTH_SECRET: 'segredo-de-teste-min-16-chars',
+  NUTRITION_ENABLED: 'true',
 });
 
 let app: Hono;

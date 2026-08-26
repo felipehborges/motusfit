@@ -6,7 +6,7 @@ import type {
   SessionSummary,
   WorkoutSet,
 } from '@motusfit/contracts';
-import { estimateSessionKcal, sessionVolumeKg } from '@motusfit/core';
+import { sessionVolumeKg } from '@motusfit/core';
 import { type Database, schema } from '@motusfit/db';
 import { and, desc, eq, ilike, inArray, isNull, lt, max, or } from 'drizzle-orm';
 
@@ -38,14 +38,6 @@ function toSet(row: SetRow): WorkoutSet {
 
 function toSummary(row: SessionRow, sets: WorkoutSet[]): SessionSummary {
   const finished = row.finishedAt;
-  const weight = row.bodyWeightKgSnapshot === null ? null : Number(row.bodyWeightKgSnapshot);
-  const estimatedKcal =
-    finished && weight
-      ? estimateSessionKcal({
-          bodyWeightKg: weight,
-          durationMinutes: (finished.getTime() - row.startedAt.getTime()) / 60_000,
-        })
-      : null;
   return {
     id: row.id,
     title: row.title,
@@ -54,7 +46,9 @@ function toSummary(row: SessionRow, sets: WorkoutSet[]): SessionSummary {
     finishedAt: finished ? finished.toISOString() : null,
     volumeKg: sessionVolumeKg(sets),
     totalSets: sets.filter((s) => s.completed).length,
-    estimatedKcal,
+    // Mantido no contrato temporariamente para compatibilidade com clientes
+    // antigos; o cálculo calórico está desativado no modo treino.
+    estimatedKcal: null,
   };
 }
 
