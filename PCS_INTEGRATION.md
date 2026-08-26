@@ -3,7 +3,7 @@
 Atualizado em: 2026-08-26 (America/Sao_Paulo)  
 Dispositivo: PC de trabalho (`SWINNT-NOTE0085`)  
 Branch: `master`  
-Sincronização: todas as alterações locais, incluindo esta integração entre dispositivos, serão incluídas no próximo commit e enviadas para `origin/master`.
+Sincronização: limpa e alinhada com `origin/master`. O trabalho principal está no commit `3c39ed7`; este estado final do handoff segue em um commit posterior de documentação.
 
 ## Objetivo atual
 
