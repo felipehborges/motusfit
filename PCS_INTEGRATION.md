@@ -3,7 +3,7 @@
 Atualizado em: 2026-09-01 14:42 UTC
 Dispositivo: não identificado nesta sessão
 Branch: `master`
-Sincronização: a correção de autenticação foi enviada para `origin/master` no commit `0af7f01`. Permanece uma alteração local pré-existente e staged em `apps/api/package.json`, não incluída neste trabalho.
+Sincronização: a correção de autenticação e o handoff foram enviados para `origin/master` até o commit `25b2a0a`. Permanece uma alteração local pré-existente e staged em `apps/api/package.json`, não incluída neste trabalho.
 
 ## Objetivo atual
 
@@ -55,5 +55,5 @@ O comando `pnpm check` ainda falha no Biome porque o checkout do Windows contém
 
 ## Orientação da retomada
 
-- A correção de autenticação está em `origin/master` (commit `0af7f01`). Restam somente ajustes de formatação locais em dois arquivos já incluídos no commit, além da alteração do usuário em `apps/api/package.json`.
+- A correção de autenticação está em `origin/master` (commits `0af7f01` e `25b2a0a`). Não restam alterações locais deste trabalho; há somente a alteração do usuário em `apps/api/package.json`.
 - A publicação exige login no Neon e no Render. Vercel já está autenticada, mas criar o projeto e configurar variáveis ainda não foi feito. Nenhum segredo ou URL pública foi criado nesta sessão.
