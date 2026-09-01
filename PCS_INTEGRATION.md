@@ -1,9 +1,9 @@
 # MotusFit — handoff entre dispositivos
 
-Atualizado em: 2026-08-29 16:03 UTC
+Atualizado em: 2026-09-01 14:42 UTC
 Dispositivo: não identificado nesta sessão
 Branch: `master`
-Sincronização: há uma alteração local pré-existente em `apps/api/package.json`; a correção de autenticação e este handoff ainda não foram commitados nem enviados.
+Sincronização: a correção de autenticação foi enviada para `origin/master` no commit `0af7f01`. Permanece uma alteração local pré-existente e staged em `apps/api/package.json`, não incluída neste trabalho.
 
 ## Objetivo atual
 
@@ -14,6 +14,7 @@ Preparar uma publicação segura do MotusFit, com acesso pelo celular fora da re
 - Stack planejada: web Next.js 16 na Vercel, API Hono/Node 24 no Render e PostgreSQL no Neon.
 - O repositório contém `render.yaml`, `apps/api/Dockerfile`, migrations Drizzle e proxy web `/api/*` para a API.
 - Não há URL de produção registrada no repositório, e a documentação/handoff indicam que o deploy ainda não foi realizado. Portanto, o site não está confirmado como acessível publicamente; atualmente o acesso confirmado é somente local (`http://localhost:3000`).
+- Vercel: sessão autenticada na equipe pessoal `felipehborges-projects`, mas ainda não há projeto MotusFit criado. Neon e Render pedem login nesta sessão.
 - Build de produção da web passou após a correção de autenticação.
 - Typecheck da web passou.
 - E2E da web passou: 2 testes críticos (cadastro → treino → histórico e cadastro → treino → estatísticas) passaram; 1 teste de diário permanece intencionalmente ignorado porque nutrição está desativada.
@@ -54,5 +55,5 @@ O comando `pnpm check` ainda falha no Biome porque o checkout do Windows contém
 
 ## Orientação da retomada
 
-- A correção de autenticação está pronta, mas não foi commitada. Arquivos alterados: páginas de login/cadastro, configuração Playwright e os E2Es de treino/estatísticas.
-- A publicação exige acesso às contas do usuário no Neon, Render e Vercel. Nenhum segredo ou URL pública foi criado nesta sessão.
+- A correção de autenticação está em `origin/master` (commit `0af7f01`). Restam somente ajustes de formatação locais em dois arquivos já incluídos no commit, além da alteração do usuário em `apps/api/package.json`.
+- A publicação exige login no Neon e no Render. Vercel já está autenticada, mas criar o projeto e configurar variáveis ainda não foi feito. Nenhum segredo ou URL pública foi criado nesta sessão.
