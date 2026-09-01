@@ -1,9 +1,9 @@
 # MotusFit — handoff entre dispositivos
 
-Atualizado em: 2026-09-01 14:42 UTC
+Atualizado em: 2026-09-01 15:49 UTC
 Dispositivo: não identificado nesta sessão
 Branch: `master`
-Sincronização: a correção de autenticação e o handoff foram enviados para `origin/master` até o commit `25b2a0a`. Permanece uma alteração local pré-existente e staged em `apps/api/package.json`, não incluída neste trabalho.
+Sincronização: `origin/master` e `origin/main` foram alinhadas no commit `179a35f`; a alteração local pré-existente e staged em `apps/api/package.json` não foi incluída neste trabalho. Esta atualização do handoff ainda será commitada.
 
 ## Objetivo atual
 
@@ -13,8 +13,10 @@ Preparar uma publicação segura do MotusFit, com acesso pelo celular fora da re
 
 - Stack planejada: web Next.js 16 na Vercel, API Hono/Node 24 no Render e PostgreSQL no Neon.
 - O repositório contém `render.yaml`, `apps/api/Dockerfile`, migrations Drizzle e proxy web `/api/*` para a API.
-- Não há URL de produção registrada no repositório, e a documentação/handoff indicam que o deploy ainda não foi realizado. Portanto, o site não está confirmado como acessível publicamente; atualmente o acesso confirmado é somente local (`http://localhost:3000`).
-- Vercel: sessão autenticada na equipe pessoal `felipehborges-projects`, mas ainda não há projeto MotusFit criado. Neon e Render pedem login nesta sessão.
+- A publicação existe e está acessível em `https://motusfit-web.vercel.app`; o cadastro público abre em `/signup`.
+- Infraestrutura confirmada: projeto `motusfit` no Neon (São Paulo), API `motusfit-api` no Render e projeto `motusfit-web` na Vercel.
+- O health check público funciona tanto diretamente no Render quanto através do proxy da Vercel (`/api/v1/health`, HTTP 200).
+- O Render acompanhava a branch `main`, enquanto a Vercel acompanhava `master`. As branches foram alinhadas em `179a35f` para evitar novos deploys defasados.
 - Build de produção da web passou após a correção de autenticação.
 - Typecheck da web passou.
 - E2E da web passou: 2 testes críticos (cadastro → treino → histórico e cadastro → treino → estatísticas) passaram; 1 teste de diário permanece intencionalmente ignorado porque nutrição está desativada.
@@ -36,10 +38,9 @@ O comando `pnpm check` ainda falha no Biome porque o checkout do Windows contém
 
 ## Próximos passos
 
-1. Criar o PostgreSQL no Neon e obter a `DATABASE_URL` com `sslmode=require`.
-2. Publicar a API no Render e configurar `DATABASE_URL`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL` e `CORS_ORIGINS`.
-3. Publicar a web na Vercel com `API_URL` apontando para o Render.
-4. Atualizar `CORS_ORIGINS` com a URL final da Vercel e testar persistência pelo HTTPS publicado no celular.
+1. Confirmar que o auto-deploy do Render para `179a35f` concluiu (a configuração já contém `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `CORS_ORIGINS` e `DATABASE_URL`).
+2. Fazer o teste autenticado em produção: cadastro → rotina → sessão → séries → conclusão → histórico, sem registrar credenciais ou URLs de banco aqui.
+3. Testar o mesmo fluxo no celular e, se desejado, adicionar o site à tela inicial.
 
 ## Cuidados
 
@@ -55,5 +56,5 @@ O comando `pnpm check` ainda falha no Biome porque o checkout do Windows contém
 
 ## Orientação da retomada
 
-- A correção de autenticação está em `origin/master` (commits `0af7f01` e `25b2a0a`). Não restam alterações locais deste trabalho; há somente a alteração do usuário em `apps/api/package.json`.
-- A publicação exige login no Neon e no Render. Vercel já está autenticada, mas criar o projeto e configurar variáveis ainda não foi feito. Nenhum segredo ou URL pública foi criado nesta sessão.
+- A correção de autenticação está publicada na Vercel: `https://motusfit-web.vercel.app/signup` exibe o formulário de cadastro.
+- Nenhum segredo foi revelado ou alterado. Há somente a alteração local do usuário em `apps/api/package.json`.
