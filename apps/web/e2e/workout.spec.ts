@@ -12,12 +12,12 @@ test('rotina → sessão → séries → concluir → histórico', async ({ page
   await page.getByRole('button', { name: 'Criar conta' }).click();
   await expect(page.getByRole('heading', { name: /Seu treino, hoje/i })).toBeVisible();
 
-  await page.getByRole('link', { name: 'Treinos' }).click();
+  await page.getByRole('link', { name: 'Treinos', exact: true }).click();
 
   // Criar rotina com exercício novo
   await page.getByRole('button', { name: 'Nova rotina' }).click();
   await page.getByLabel('Nome da rotina').fill('Push E2E');
-  await page.getByRole('button', { name: 'novo exercício' }).click();
+  await page.getByRole('button', { name: 'Não encontrou? Criar exercício' }).click();
   await page.getByLabel('Nome do exercício').fill(exerciseName);
   await page.getByRole('button', { name: 'Criar', exact: true }).click();
   await expect(page.getByText(exerciseName)).toBeVisible();
@@ -25,26 +25,31 @@ test('rotina → sessão → séries → concluir → histórico', async ({ page
   await expect(page.getByText('Push E2E')).toBeVisible();
 
   // Iniciar sessão e registrar 2 séries
-  await page.getByRole('button', { name: 'Iniciar' }).click();
+  await page.getByRole('button', { name: 'Iniciar', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Push E2E' })).toBeVisible();
 
   await page.getByLabel('Reps').fill('10');
   await page.getByLabel('Carga (kg)').fill('60');
-  await page.getByRole('button', { name: '✓ Série feita' }).click();
-  await expect(page.getByText('#1 — 10 reps × 60 kg')).toBeVisible();
-  await expect(page.getByText(/descanso: \d+s/)).toBeVisible();
+  await page.getByRole('button', { name: 'Série feita' }).click();
+  const sets = page.locator('.mf-set-list > li');
+  await expect(sets).toHaveCount(1);
+  await expect(sets.nth(0)).toContainText(/60\s*kg\s*10\s*reps/);
+  await expect(page.locator('.mf-rest-timer')).toContainText(/\d+s/);
 
   await page.getByLabel('Reps').fill('8');
   await page.getByLabel('Carga (kg)').fill('65');
-  await page.getByRole('button', { name: '✓ Série feita' }).click();
-  await expect(page.getByText('#2 — 8 reps × 65 kg')).toBeVisible();
+  await page.getByRole('button', { name: 'Série feita' }).click();
+  await expect(sets).toHaveCount(2);
+  await expect(sets.nth(1)).toContainText(/65\s*kg\s*8\s*reps/);
 
   // Volume = 60×10 + 65×8 = 1120 kg
-  await expect(page.getByText(/1120 kg de volume/)).toBeVisible();
+  await expect(
+    page.locator('.mf-session-metrics').getByText('1120', { exact: true }),
+  ).toBeVisible();
 
   await page.getByRole('button', { name: 'Concluir treino' }).click();
 
   // Histórico mostra a sessão concluída
-  await expect(page.getByRole('heading', { name: 'Histórico' })).toBeVisible();
-  await expect(page.getByText(/2 séries · 1120 kg/)).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Atividade recente' })).toBeVisible();
+  await expect(page.getByText(/2\s*séries\s*1120\s*kg/)).toBeVisible();
 });

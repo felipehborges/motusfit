@@ -16,7 +16,7 @@ export default defineConfig({
       cwd: '../..',
       env: {
         BETTER_AUTH_SECRET: 'e2e-secret-motusfit-com-32-chars-ok!',
-        NODE_ENV: 'development',
+        NODE_ENV: 'test',
       },
     },
     {

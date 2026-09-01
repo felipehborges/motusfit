@@ -1,49 +1,58 @@
 # MotusFit — handoff entre dispositivos
 
-Atualizado em: 2026-08-26 (America/Sao_Paulo)  
-Dispositivo: PC de trabalho (`SWINNT-NOTE0085`)  
-Branch: `master`  
-Sincronização: atualização do handoff pronta para commit e push em `origin/master`.
+Atualizado em: 2026-08-29 16:03 UTC
+Dispositivo: não identificado nesta sessão
+Branch: `master`
+Sincronização: há uma alteração local pré-existente em `apps/api/package.json`; a correção de autenticação e este handoff ainda não foram commitados nem enviados.
 
 ## Objetivo atual
 
-Publicar o MotusFit para uso real no navegador do celular durante o treino, com backend e PostgreSQL persistente. O fluxo necessário inclui criar rotinas e exercícios, iniciar uma sessão, registrar séries/repetições/carga, concluir o treino e consultar histórico e estatísticas sem perder dados.
+Preparar uma publicação segura do MotusFit, com acesso pelo celular fora da rede/local.
 
 ## Estado confirmado
 
 - Stack planejada: web Next.js 16 na Vercel, API Hono/Node 24 no Render e PostgreSQL no Neon.
 - O repositório contém `render.yaml`, `apps/api/Dockerfile`, migrations Drizzle e proxy web `/api/*` para a API.
-- Build de produção passou.
-- Typecheck passou em todos os pacotes aplicáveis.
+- Não há URL de produção registrada no repositório, e a documentação/handoff indicam que o deploy ainda não foi realizado. Portanto, o site não está confirmado como acessível publicamente; atualmente o acesso confirmado é somente local (`http://localhost:3000`).
+- Build de produção da web passou após a correção de autenticação.
+- Typecheck da web passou.
+- E2E da web passou: 2 testes críticos (cadastro → treino → histórico e cadastro → treino → estatísticas) passaram; 1 teste de diário permanece intencionalmente ignorado porque nutrição está desativada.
 - Testes passaram: core 14/14 e API 31/31.
 - Site e API funcionam localmente com Node 24; web em `:3000` e API em `:3001`.
 - O banco local é PGlite; produção deve obrigatoriamente receber `DATABASE_URL` persistente do Neon com SSL.
 - A skill portátil `.agents/skills/pc-integration/SKILL.md` e o `AGENTS.md` da raiz foram criados. Todo agente deve ler e atualizar este arquivo em cada tarefa.
 - Foi preparado um prompt curto para replicar a mesma skill, `AGENTS.md` e arquivo de handoff nos outros projetos do usuário.
 
-## Bloqueador de publicação identificado
+## Bloqueador de publicação resolvido
 
-Em produção, o Docker define `NODE_ENV=production`, o que ativa autenticação na API. Entretanto, `apps/web/src/app/login/page.tsx` e `apps/web/src/app/signup/page.tsx` redirecionam diretamente para `/app`. Um deploy no estado atual pode abrir a interface, mas não consegue autenticar para gravar recursos protegidos.
-
-A correção recomendada é restaurar as páginas reais usando `apps/web/src/features/auth/auth-form.tsx`, manter autenticação ligada em produção e atualizar os testes E2E. Não publicar com `AUTH_ENABLED=false`, pois isso exporia os dados do usuário a qualquer pessoa com acesso à URL.
+Em produção, o Docker define `NODE_ENV=production`, ativando autenticação na API. As páginas `apps/web/src/app/login/page.tsx` e `apps/web/src/app/signup/page.tsx` agora exibem `apps/web/src/features/auth/auth-form.tsx` em vez de redirecionar para `/app`. O Playwright sobe a API com `NODE_ENV=test`, portanto testa cadastro real e sessão autenticada.
 
 ## Validação E2E
 
-O Chromium do Playwright foi instalado neste PC. O teste `apps/web/e2e/workout.spec.ts` foi executado, mas expirou esperando o campo `Nome` em `/signup`, confirmando o bloqueador acima: a rota redireciona para `/app`. Não foi uma falha de build ou da API.
+O Chromium do Playwright foi instalado/atualizado neste PC. Os testes `apps/web/e2e/workout.spec.ts` e `apps/web/e2e/stats.spec.ts` foram atualizados para a interface atual e passaram. A suíte tem 2 testes aprovados e 1 ignorado (nutrição desativada).
 
 O comando `pnpm check` ainda falha no Biome porque o checkout do Windows contém CRLF em dezenas de arquivos e a configuração exige LF. Não foi aplicada uma reformatação global para evitar um diff mecânico fora do escopo. `pnpm typecheck`, `pnpm test` e `pnpm build` passaram separadamente.
 
 ## Próximos passos
 
-1. Restaurar login e cadastro na web e garantir navegação correta para usuários sem sessão.
-2. Ajustar e executar o E2E completo: cadastro/login → rotina → sessão → séries com reps/carga → conclusão → histórico.
-3. Criar o PostgreSQL no Neon e obter a `DATABASE_URL` com `sslmode=require`.
-4. Publicar a API no Render e configurar `DATABASE_URL`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL` e `CORS_ORIGINS`.
-5. Publicar a web na Vercel com `API_URL` apontando para o Render.
-6. Atualizar `CORS_ORIGINS` com a URL final da Vercel e testar persistência pelo HTTPS publicado no celular.
+1. Criar o PostgreSQL no Neon e obter a `DATABASE_URL` com `sslmode=require`.
+2. Publicar a API no Render e configurar `DATABASE_URL`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL` e `CORS_ORIGINS`.
+3. Publicar a web na Vercel com `API_URL` apontando para o Render.
+4. Atualizar `CORS_ORIGINS` com a URL final da Vercel e testar persistência pelo HTTPS publicado no celular.
 
 ## Cuidados
 
 - Antes de continuar em outro dispositivo, executar `git pull --ff-only` e ler este arquivo.
 - Não sobrescrever mudanças locais existentes sem inspecionar `git status` e o diff.
 - Nunca registrar segredos ou connection strings neste arquivo.
+
+## Verificação desta sessão
+
+- Validação realizada: inspeção de `docs/deployment.md`, `render.yaml`, remotes Git e estado do checkout.
+- Resultado: deploy planejado para Vercel (web), Render (API) e Neon (PostgreSQL), mas não há evidência de URL ou publicação ativa. Nenhuma configuração de hosting foi alterada.
+- Próxima ação recomendada: concluir a correção de autenticação e então realizar os passos de deploy documentados; após isso, registrar as URLs públicas (sem segredos) neste arquivo.
+
+## Orientação da retomada
+
+- A correção de autenticação está pronta, mas não foi commitada. Arquivos alterados: páginas de login/cadastro, configuração Playwright e os E2Es de treino/estatísticas.
+- A publicação exige acesso às contas do usuário no Neon, Render e Vercel. Nenhum segredo ou URL pública foi criado nesta sessão.
