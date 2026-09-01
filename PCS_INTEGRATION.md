@@ -1,9 +1,9 @@
 # MotusFit — handoff entre dispositivos
 
-Atualizado em: 2026-09-01 15:49 UTC
+Atualizado em: 2026-09-01 20:01 UTC
 Dispositivo: não identificado nesta sessão
 Branch: `master`
-Sincronização: `origin/master` e `origin/main` foram alinhadas no commit `179a35f`; a alteração local pré-existente e staged em `apps/api/package.json` não foi incluída neste trabalho. Esta atualização do handoff ainda será commitada.
+Sincronização: `origin/master` e `origin/main` foram alinhadas e o Render fez deploy com sucesso do commit `ffbe19f`; a alteração local pré-existente e staged em `apps/api/package.json` não foi incluída neste trabalho. Esta atualização do handoff ainda será commitada.
 
 ## Objetivo atual
 
@@ -16,6 +16,7 @@ Preparar uma publicação segura do MotusFit, com acesso pelo celular fora da re
 - A publicação existe e está acessível em `https://motusfit-web.vercel.app`; o cadastro público abre em `/signup`.
 - Infraestrutura confirmada: projeto `motusfit` no Neon (São Paulo), API `motusfit-api` no Render e projeto `motusfit-web` na Vercel.
 - O health check público funciona tanto diretamente no Render quanto através do proxy da Vercel (`/api/v1/health`, HTTP 200).
+- Validação autenticada em produção concluída com uma conta de teste descartável: cadastro, login, criação de rotina/exercício, duas séries (10×60 kg e 8×65 kg), conclusão, histórico e estatísticas persistiram no Neon. O histórico e as estatísticas confirmaram 2 séries, 1.120 kg e 1 sessão concluída.
 - O Render acompanhava a branch `main`, enquanto a Vercel acompanhava `master`. As branches foram alinhadas em `179a35f` para evitar novos deploys defasados.
 - Build de produção da web passou após a correção de autenticação.
 - Typecheck da web passou.
@@ -38,9 +39,8 @@ O comando `pnpm check` ainda falha no Biome porque o checkout do Windows contém
 
 ## Próximos passos
 
-1. Confirmar que o auto-deploy do Render para `179a35f` concluiu (a configuração já contém `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `CORS_ORIGINS` e `DATABASE_URL`).
-2. Fazer o teste autenticado em produção: cadastro → rotina → sessão → séries → conclusão → histórico, sem registrar credenciais ou URLs de banco aqui.
-3. Testar o mesmo fluxo no celular e, se desejado, adicionar o site à tela inicial.
+1. Testar o fluxo no celular e, se desejado, adicionar `https://motusfit-web.vercel.app` à tela inicial.
+2. Opcional: apagar os dados de teste de produção. Há uma rotina concluída válida de teste e uma sessão vazia “Em andamento”, originada pela retomada do navegador; não remover sem confirmação explícita do usuário.
 
 ## Cuidados
 
