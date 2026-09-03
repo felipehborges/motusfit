@@ -2,7 +2,11 @@
 
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { signIn, signUp } from '@/lib/auth-client';
+import { DEMO_MODE } from '@/lib/mock-api';
 
 type Mode = 'login' | 'signup';
 
@@ -18,6 +22,10 @@ export function AuthForm({ mode }: { mode: Mode }) {
     event.preventDefault();
     setError(null);
     setPending(true);
+    if (DEMO_MODE) {
+      router.push('/app');
+      return;
+    }
     const result =
       mode === 'signup'
         ? await signUp.email({ name, email, password })
@@ -33,30 +41,32 @@ export function AuthForm({ mode }: { mode: Mode }) {
   return (
     <form onSubmit={handleSubmit} className="flex w-full max-w-sm flex-col gap-4">
       {mode === 'signup' && (
-        <label className="flex flex-col gap-1 text-sm">
-          Nome
-          <input
-            className="rounded border border-zinc-300 px-3 py-2 dark:border-zinc-700 dark:bg-zinc-900"
+        <div className="flex flex-col gap-2 text-sm">
+          <Label htmlFor="name">Nome</Label>
+          <Input
+            id="name"
             value={name}
             onChange={(e) => setName(e.target.value)}
             required
             maxLength={100}
           />
-        </label>
+        </div>
       )}
-      <label className="flex flex-col gap-1 text-sm">
-        E-mail
-        <input
+      <div className="flex flex-col gap-2 text-sm">
+        <Label htmlFor="email">E-mail</Label>
+        <Input
+          id="email"
           type="email"
           className="rounded border border-zinc-300 px-3 py-2 dark:border-zinc-700 dark:bg-zinc-900"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
         />
-      </label>
-      <label className="flex flex-col gap-1 text-sm">
-        Senha
-        <input
+      </div>
+      <div className="flex flex-col gap-2 text-sm">
+        <Label htmlFor="password">Senha</Label>
+        <Input
+          id="password"
           type="password"
           className="rounded border border-zinc-300 px-3 py-2 dark:border-zinc-700 dark:bg-zinc-900"
           value={password}
@@ -64,15 +74,11 @@ export function AuthForm({ mode }: { mode: Mode }) {
           required
           minLength={8}
         />
-      </label>
+      </div>
       {error && <p className="text-sm text-red-600">{error}</p>}
-      <button
-        type="submit"
-        disabled={pending}
-        className="rounded bg-zinc-900 px-3 py-2 font-medium text-white disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900"
-      >
+      <Button type="submit" disabled={pending}>
         {pending ? 'Enviando…' : mode === 'signup' ? 'Criar conta' : 'Entrar'}
-      </button>
+      </Button>
     </form>
   );
 }

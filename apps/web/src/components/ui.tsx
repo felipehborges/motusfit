@@ -1,8 +1,9 @@
-import type { HTMLAttributes, ReactNode } from 'react';
+import type { ReactNode } from 'react';
+import { Card } from '@/components/ui/card';
 
-export function Card({ className = '', ...props }: HTMLAttributes<HTMLElement>) {
-  return <section className={`mf-card ${className}`} {...props} />;
-}
+// Product display compositions. Generic controls and surfaces live in ./ui/*
+// and come directly from shadcn/ui.
+export { Card };
 
 export function SectionHeader({
   eyebrow,
@@ -68,14 +69,4 @@ export function Metric({
       {unit && <span className="mf-metric-unit">{unit}</span>}
     </div>
   );
-}
-
-export function StatusPill({
-  children,
-  tone = 'neutral',
-}: {
-  children: ReactNode;
-  tone?: 'neutral' | 'success' | 'warning';
-}) {
-  return <span className={`mf-pill mf-pill-${tone}`}>{children}</span>;
 }

@@ -2,7 +2,9 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { Activity, Dumbbell, TrendingUp } from 'lucide-react';
-import { Card, Metric, PageHeader, SectionHeader, StatusPill } from '@/components/ui';
+import { Metric, PageHeader, SectionHeader } from '@/components/ui';
+import { Badge } from '@/components/ui/badge';
+import { Card } from '@/components/ui/card';
 import { api } from '@/lib/api';
 
 const MUSCLE_LABELS: Record<string, string> = {
@@ -31,9 +33,9 @@ export function WeeklyStats({ date }: { date: string }) {
         title="Evolução em números."
         description="Entenda o que você fez, onde está avançando e qual é o próximo movimento."
         action={
-          <StatusPill tone="success">
+          <Badge className="bg-primary text-primary-foreground">
             <TrendingUp size={12} /> Semana ativa
-          </StatusPill>
+          </Badge>
         }
       />
 

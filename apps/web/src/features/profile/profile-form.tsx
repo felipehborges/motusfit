@@ -3,7 +3,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Check, ShieldCheck, UserRound } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { Card, SectionHeader, StatusPill } from '@/components/ui';
+import { SectionHeader } from '@/components/ui';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { api } from '@/lib/api';
 
 export function ProfileForm() {
@@ -58,9 +61,9 @@ export function ProfileForm() {
             description="Usadas apenas para personalizar sua experiência."
             action={
               saved ? (
-                <StatusPill tone="success">
+                <Badge className="bg-primary text-primary-foreground">
                   <Check size={12} /> Salvo
-                </StatusPill>
+                </Badge>
               ) : undefined
             }
           />
@@ -77,9 +80,9 @@ export function ProfileForm() {
               />
             </span>
           </label>
-          <button type="submit" disabled={saveProfile.isPending} className="mf-btn">
+          <Button type="submit" disabled={saveProfile.isPending}>
             Salvar
-          </button>
+          </Button>
         </form>
       </Card>
     </div>

@@ -4,7 +4,9 @@ import { useQuery } from '@tanstack/react-query';
 import { Activity, Dumbbell, Target, Trophy } from 'lucide-react';
 import Link from 'next/link';
 import type { CSSProperties } from 'react';
-import { Card, Metric, StatusPill } from '@/components/ui';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import { api } from '@/lib/api';
 
 export function TodayCard({ date }: { date: string }) {
@@ -17,9 +19,9 @@ export function TodayCard({ date }: { date: string }) {
     <div className="mf-dashboard-grid">
       <Card className="mf-energy-card">
         <div className="mf-energy-copy">
-          <StatusPill tone="success">
+          <Badge className="bg-primary text-primary-foreground">
             <Activity size={12} /> Foco do dia
-          </StatusPill>
+          </Badge>
           <h2>Construa sua força.</h2>
           <p>Registre seu treino, acompanhe o volume e faça da consistência o seu progresso.</p>
           <div className="mf-energy-balance">
@@ -29,9 +31,11 @@ export function TodayCard({ date }: { date: string }) {
               {stats.workoutSessions === 1 ? '' : 's'} hoje
             </span>
           </div>
-          <Link href="/app/treinos" className="mf-btn">
-            <Dumbbell size={16} /> Ir para treinos
-          </Link>
+          <Button asChild>
+            <Link href="/app/treinos">
+              <Dumbbell size={16} /> Ir para treinos
+            </Link>
+          </Button>
         </div>
         <div className="mf-progress-ring" style={{ '--progress': '220deg' } as CSSProperties}>
           <div>
@@ -51,8 +55,18 @@ export function TodayCard({ date }: { date: string }) {
           <Trophy size={20} />
         </div>
         <div className="mf-performance-metrics">
-          <Metric label="Treinos" value={stats.workoutSessions} tone="lime" />
-          <Metric label="Próximo passo" value="Treinar" tone="blue" />
+          <Card className="mf-metric mf-metric-lime">
+            <CardContent className="p-0">
+              <span className="mf-metric-label">Treinos</span>
+              <strong>{stats.workoutSessions}</strong>
+            </CardContent>
+          </Card>
+          <Card className="mf-metric mf-metric-blue">
+            <CardContent className="p-0">
+              <span className="mf-metric-label">Próximo passo</span>
+              <strong>Treinar</strong>
+            </CardContent>
+          </Card>
         </div>
         <div className="mf-streak-row">
           <Target size={16} />

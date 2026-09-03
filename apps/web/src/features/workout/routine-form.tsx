@@ -4,6 +4,7 @@ import type { Exercise, MuscleGroup, Routine } from '@motusfit/contracts';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { api } from '@/lib/api';
+import { DEMO_MODE } from '@/lib/mock-api';
 
 type PlannedExercise = {
   exercise: Exercise;
@@ -106,19 +107,27 @@ function ExerciseThumbnail({
           : 'h-20 w-24 shrink-0 overflow-hidden rounded-lg bg-zinc-100 dark:bg-zinc-800'
       }
     >
-      {/* biome-ignore lint/performance/noImgElement: remote public-domain exercise demonstrations intentionally bypass Next image optimization. */}
-      <img
-        src={imageUrl(
-          EXERCISE_IMAGE_IDS[exercise.name] ?? GROUP_FALLBACK_IMAGE_IDS[exercise.muscleGroup],
-        )}
-        alt={`Demonstração de ${exercise.name}`}
-        className="h-full w-full object-cover"
-        loading="lazy"
-        onError={(event) => {
-          event.currentTarget.onerror = null;
-          event.currentTarget.src = fallbackUrl;
-        }}
-      />
+      {DEMO_MODE ? (
+        <span className="grid h-full w-full place-items-center bg-primary text-center text-xs font-black text-primary-foreground">
+          DEMO
+          <br />
+          {exercise.name}
+        </span>
+      ) : (
+        // biome-ignore lint/performance/noImgElement: remote public-domain exercise demonstrations intentionally bypass Next image optimization.
+        <img
+          src={imageUrl(
+            EXERCISE_IMAGE_IDS[exercise.name] ?? GROUP_FALLBACK_IMAGE_IDS[exercise.muscleGroup],
+          )}
+          alt={`Demonstração de ${exercise.name}`}
+          className="h-full w-full object-cover"
+          loading="lazy"
+          onError={(event) => {
+            event.currentTarget.onerror = null;
+            event.currentTarget.src = fallbackUrl;
+          }}
+        />
+      )}
     </div>
   );
 }

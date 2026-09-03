@@ -4,7 +4,11 @@ import type { Exercise, SessionDetail } from '@motusfit/contracts';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Check, Clock3, Dumbbell, Plus, Search, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { Card, Metric, PageHeader, StatusPill } from '@/components/ui';
+import { Metric, PageHeader } from '@/components/ui';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import { api } from '@/lib/api';
 
 export function SessionView({
@@ -46,18 +50,17 @@ export function SessionView({
         description="Registre cada série. O progresso mora nos detalhes."
         action={
           !readOnly ? (
-            <button
+            <Button
               type="button"
               disabled={finish.isPending}
-              className="mf-btn"
               onClick={() => finish.mutate({ id: session.id })}
             >
               <Check size={16} /> Concluir treino
-            </button>
+            </Button>
           ) : (
-            <StatusPill tone="success">
+            <Badge className="bg-primary text-primary-foreground">
               <Check size={12} /> Finalizado
-            </StatusPill>
+            </Badge>
           )
         }
       />
@@ -118,7 +121,7 @@ function ExerciseBlock({
           <p className="mf-eyebrow">Exercício</p>
           <h3>{exercise.name}</h3>
         </div>
-        <StatusPill>{sets.length} séries</StatusPill>
+        <Badge variant="secondary">{sets.length} séries</Badge>
       </div>
       <ol className="mf-set-list">
         {sets.map((set, index) => (
@@ -212,32 +215,34 @@ function SetForm({
         });
       }}
     >
-      <label className="mf-field">
+      <label className="mf-field" htmlFor={`${sessionId}-${exerciseId}-reps`}>
         Reps
-        <input
+        <Input
           type="number"
+          id={`${sessionId}-${exerciseId}-reps`}
           min="1"
-          className="mf-input w-24"
+          className="w-24"
           value={reps}
           onChange={(e) => setReps(e.target.value)}
           required
         />
       </label>
-      <label className="mf-field">
+      <label className="mf-field" htmlFor={`${sessionId}-${exerciseId}-weight`}>
         Carga (kg)
-        <input
+        <Input
           type="number"
+          id={`${sessionId}-${exerciseId}-weight`}
           min="0"
           step="any"
-          className="mf-input w-28"
+          className="w-28"
           value={weight}
           onChange={(e) => setWeight(e.target.value)}
           required
         />
       </label>
-      <button type="submit" disabled={addSet.isPending} className="mf-btn">
+      <Button type="submit" disabled={addSet.isPending}>
         <Check size={15} /> Série feita
-      </button>
+      </Button>
       {resting > 0 && (
         <span className="mf-rest-timer">
           <Clock3 size={14} /> {resting}s
@@ -266,11 +271,11 @@ function AddExercise({ session, onChanged }: { session: SessionDetail; onChanged
           <span>Busque na biblioteca do MotusFit</span>
         </div>
       </div>
-      <label>
+      <label htmlFor="exercise-search">
         <Search size={15} />
-        <input
+        <Input
+          id="exercise-search"
           placeholder="Nome do exercício…"
-          className="mf-input"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />

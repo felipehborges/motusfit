@@ -1,13 +1,33 @@
 # MotusFit — handoff entre dispositivos
 
-Atualizado em: 2026-09-01 20:01 UTC
+Atualizado em: 2026-09-03 02:15 UTC
 Dispositivo: não identificado nesta sessão
 Branch: `master`
-Sincronização: `origin/master` e `origin/main` foram alinhadas e o Render fez deploy com sucesso do commit `ffbe19f`; a alteração local pré-existente e staged em `apps/api/package.json` não foi incluída neste trabalho. Esta atualização do handoff ainda será commitada.
+Sincronização: commit local `c565a1f` preparado para push em `master`; a alteração local pré-existente em `apps/api/package.json` permanece explicitamente fora deste commit e sem stage.
 
 ## Objetivo atual
 
-Preparar uma publicação segura do MotusFit, com acesso pelo celular fora da rede/local.
+Validar a UX e as regras visuais do web com dados locais, sem qualquer requisição ao backend, preservando Next.js/Vercel e sem alterar `apps/mobile` ou contratos funcionais.
+
+## Estado desta sessão
+
+- shadcn/ui foi inicializado em `apps/web` com Tailwind CSS v4 e alias `@/`; `components.json` e `src/lib/utils.ts` foram adicionados.
+- Componentes instalados: `button`, `card`, `badge`, `input`, `label`, `separator` e `skeleton`. A configuração adicionou `class-variance-authority`, `clsx`, `radix-ui`, `tailwind-merge` e `tw-animate-css` ao app web.
+- `src/app/globals.css` agora define tokens neobrutalistas (superfícies creme, lima e laranja, bordas pretas de 3 px, sombras deslocadas e foco visível) e aplica a mesma linguagem aos primitives shadcn e aos compostos específicos do produto.
+- Login e cadastro foram convertidos para `Card`, `Input`, `Label` e `Button` shadcn. Dashboard, treinos, sessão ativa, estatísticas e perfil passaram a usar `Card`, `Button` e `Badge` shadcn nas superfícies e ações migradas.
+- `src/components/ui.tsx` deixou de definir `Card` próprio e `StatusPill`; agora apenas reexporta o `Card` shadcn e mantém cabeçalhos/métricas como composições específicas de apresentação, sem substituir regras de negócio.
+- Nenhum arquivo de `apps/mobile` foi alterado. A alteração local e staged em `apps/api/package.json` foi preservada e não foi incluída neste trabalho.
+- O web agora está deliberadamente em modo de demonstração (`DEMO_MODE = true` em `apps/web/src/lib/mock-api.ts`). Todas as chamadas do cliente tipado são interceptadas localmente com dados de treino, rotinas, sessão, perfil e estatísticas; login e cadastro apenas navegam para a demonstração. Não há requisições à API nesse modo.
+- As miniaturas remotas da biblioteca de exercícios também foram substituídas por placeholders locais no modo de demonstração, evitando chamadas externas durante a revisão de UI.
+- Para religar o backend após a aprovação da UI, mudar `DEMO_MODE` para `false` e restaurar autenticação real no fluxo de `AuthForm`; não alterar os contratos nem os endpoints.
+
+## Validação desta sessão
+
+- `pnpm --filter web typecheck`: passou.
+- `pnpm --filter web build`: passou (Next.js 16.2.10).
+- Após a introdução do modo de demonstração: `pnpm --filter web typecheck` e `pnpm --filter web build` passaram novamente.
+- Preview local compilou em `http://localhost:3001/login`; a abertura foi enviada ao painel do Codex.
+- E2E: não concluiu nesta máquina. A porta `3000`, exigida por `apps/web/playwright.config.ts`, está ocupada por outro projeto (`personal-finance-app`); o Playwright reutilizou esse servidor e ficou bloqueado. Não foi interrompido nenhum processo do usuário. Para validar, liberar a porta 3000 ou tornar a porta do Playwright configurável e executar `pnpm --filter web test:e2e`.
 
 ## Estado confirmado
 
@@ -58,3 +78,5 @@ O comando `pnpm check` ainda falha no Biome porque o checkout do Windows contém
 
 - A correção de autenticação está publicada na Vercel: `https://motusfit-web.vercel.app/signup` exibe o formulário de cadastro.
 - Nenhum segredo foi revelado ou alterado. Há somente a alteração local do usuário em `apps/api/package.json`.
+- Verificação de UI: o projeto não usa shadcn/ui. Há componentes próprios em `apps/web/src/components/ui.tsx` (`Card`, `PageHeader`, `SectionHeader`, `Metric` e `StatusPill`), estilizados por classes `mf-*`; não há dependências ou configuração do shadcn/Radix.
+- Decisão de arquitetura: shadcn/ui pode substituir os componentes da aplicação web Next.js (`apps/web`) e manter boa experiência no navegador/celular como PWA. Não é compatível diretamente com o app Expo/React Native em `apps/mobile`; uma futura UI nativa deve usar componentes próprios React Native ou uma biblioteca nativa equivalente.

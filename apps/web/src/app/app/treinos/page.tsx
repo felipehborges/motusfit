@@ -15,7 +15,10 @@ import {
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { Card, PageHeader, SectionHeader, StatusPill } from '@/components/ui';
+import { PageHeader, SectionHeader } from '@/components/ui';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { RoutineForm } from '@/features/workout/routine-form';
 import { api } from '@/lib/api';
 
@@ -48,9 +51,9 @@ export default function WorkoutsPage() {
         title="Construa sua força."
         description="Rotinas objetivas, progressão visível e zero distrações na hora de treinar."
         action={
-          <button type="button" className="mf-btn" onClick={() => setEditing('new')}>
+          <Button type="button" onClick={() => setEditing('new')}>
             <Plus size={16} /> Nova rotina
-          </button>
+          </Button>
         }
       />
 
@@ -59,18 +62,17 @@ export default function WorkoutsPage() {
           <Zap size={24} fill="currentColor" />
         </div>
         <div>
-          <StatusPill tone="success">Pronto para começar</StatusPill>
+          <Badge className="bg-primary text-primary-foreground">Pronto para começar</Badge>
           <h2>Treino livre</h2>
           <p>Entre no modo treino agora e escolha os exercícios durante a sessão.</p>
         </div>
-        <button
+        <Button
           type="button"
-          className="mf-btn"
           disabled={startSession.isPending}
           onClick={() => startSession.mutate({})}
         >
           <Dumbbell size={16} /> Iniciar agora
-        </button>
+        </Button>
       </Card>
 
       {editing !== null && (
@@ -107,13 +109,12 @@ export default function WorkoutsPage() {
                 </span>
               </div>
               <div className="mf-routine-actions">
-                <button
+                <Button
                   type="button"
-                  className="mf-btn"
                   onClick={() => startSession.mutate({ routineId: routine.id })}
                 >
                   Iniciar <ChevronRight size={15} />
-                </button>
+                </Button>
                 <button
                   type="button"
                   className="mf-icon-btn"
@@ -163,9 +164,15 @@ export default function WorkoutsPage() {
               <span className="mf-history-stats">
                 <b>{session.totalSets}</b> séries <b>{Math.round(session.volumeKg)}</b> kg
               </span>
-              <StatusPill tone={session.finishedAt === null ? 'warning' : 'success'}>
+              <Badge
+                className={
+                  session.finishedAt === null
+                    ? 'bg-secondary text-secondary-foreground'
+                    : 'bg-primary text-primary-foreground'
+                }
+              >
                 {session.finishedAt === null ? 'Em andamento' : 'Concluído'}
-              </StatusPill>
+              </Badge>
               <ChevronRight size={16} />
             </button>
           ))}
