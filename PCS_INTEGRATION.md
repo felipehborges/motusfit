@@ -1,9 +1,9 @@
 # MotusFit — handoff entre dispositivos
 
-Atualizado em: 2026-09-03 02:15 UTC
+Atualizado em: 2026-09-03 02:20 UTC
 Dispositivo: não identificado nesta sessão
 Branch: `master`
-Sincronização: commit local `c565a1f` preparado para push em `master`; a alteração local pré-existente em `apps/api/package.json` permanece explicitamente fora deste commit e sem stage.
+Sincronização: `master` foi enviado com sucesso para `origin` no commit `bf8b4d5`; a alteração local pré-existente em `apps/api/package.json` permanece fora dos commits e sem stage.
 
 ## Objetivo atual
 
