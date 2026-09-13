@@ -151,6 +151,7 @@ describe('loadEnv', () => {
       loadEnv({
         NODE_ENV: 'production',
         BETTER_AUTH_SECRET: 'segredo-de-teste-min-16-chars',
+        DATABASE_URL: 'postgres://user:pass@db.example.com/motusfit',
       }).authEnabled,
     ).toBe(true);
   });

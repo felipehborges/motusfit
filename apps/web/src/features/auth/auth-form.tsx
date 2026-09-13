@@ -10,7 +10,13 @@ import { DEMO_MODE } from '@/lib/mock-api';
 
 type Mode = 'login' | 'signup';
 
-export function AuthForm({ mode }: { mode: Mode }) {
+export function AuthForm({
+  mode,
+  sessionExpired = false,
+}: {
+  mode: Mode;
+  sessionExpired?: boolean;
+}) {
   const router = useRouter();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -75,6 +81,9 @@ export function AuthForm({ mode }: { mode: Mode }) {
           minLength={8}
         />
       </div>
+      {sessionExpired && !error && (
+        <p className="text-sm text-amber-700">Sua sessão expirou. Entre novamente.</p>
+      )}
       {error && <p className="text-sm text-red-600">{error}</p>}
       <Button type="submit" disabled={pending}>
         {pending ? 'Enviando…' : mode === 'signup' ? 'Criar conta' : 'Entrar'}

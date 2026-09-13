@@ -87,6 +87,34 @@ export const workoutSessions = pgTable(
   (table) => [index('workout_sessions_user_started_ix').on(table.userId, table.startedAt)],
 );
 
+/**
+ * Snapshot dos exercícios planejados para a sessão. Mantém a sessão estável
+ * mesmo se a rotina for editada e representa exercícios avulsos sem criar
+ * séries falsas/incompletas.
+ */
+export const sessionExercises = pgTable(
+  'session_exercises',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    sessionId: uuid('session_id')
+      .notNull()
+      .references(() => workoutSessions.id, { onDelete: 'cascade' }),
+    exerciseId: uuid('exercise_id')
+      .notNull()
+      .references(() => exercises.id, { onDelete: 'restrict' }),
+    position: integer('position').notNull(),
+    targetSets: integer('target_sets'),
+    targetRepsMin: integer('target_reps_min'),
+    targetRepsMax: integer('target_reps_max'),
+    restSeconds: integer('rest_seconds').notNull().default(90),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex('session_exercises_session_exercise_uq').on(table.sessionId, table.exerciseId),
+    uniqueIndex('session_exercises_session_position_uq').on(table.sessionId, table.position),
+  ],
+);
+
 export const workoutSets = pgTable(
   'workout_sets',
   {

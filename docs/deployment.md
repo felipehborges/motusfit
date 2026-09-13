@@ -18,7 +18,7 @@ Decisão de hosting registrada em [ADR 0008](adr/0008-hospedagem.md): Vercel (we
 4. Voltar no Render e atualizar `CORS_ORIGINS` com a URL final da Vercel; redeploy.
 5. No celular: abrir a URL da Vercel, "Adicionar à tela de início" para um atalho tipo app.
 
-Sem passo de migration manual: `applyMigrations` roda no boot da API (mesmo código do PGlite em dev), então cada deploy já aplica migrations pendentes.
+Sem passo de migration ou seed manual: `applyMigrations` roda no boot da API e a migration de dados do catálogo insere exercícios ausentes de forma idempotente.
 
 ## Artefatos
 

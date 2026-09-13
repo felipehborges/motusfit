@@ -168,6 +168,13 @@ describe('workout', () => {
     );
     expect(session.title).toBe('Push');
     expect(session.finishedAt).toBeNull();
+    expect(session.exercisePlans[0]).toMatchObject({
+      exercise: { id: bench.id },
+      targetSets: 3,
+      targetRepsMin: 8,
+      targetRepsMax: 12,
+      restSeconds: 90,
+    });
 
     await c.send('POST', `/workout/sessions/${session.id}/sets`, {
       sessionId: session.id,
@@ -218,6 +225,32 @@ describe('workout', () => {
       c.send('POST', `/workout/sessions/${session.id}/sets`, payload),
     );
     expect(retry.id).toBe(first.id);
+
+    const reloaded = await json<SessionDetail>(c.get(`/workout/sessions/${session.id}`));
+    expect(reloaded.exercisePlans).toHaveLength(1);
+    expect(reloaded.exercisePlans[0]?.exercise.id).toBe(bench.id);
+    expect(reloaded.sets).toHaveLength(1);
+  });
+
+  it('adiciona exercício avulso sem criar série âncora', async () => {
+    const c = api(await signUp('w-extra@motusfit.test'));
+    const bench = await createBench(c);
+    const session = await json<SessionDetail>(c.send('POST', '/workout/sessions', {}));
+
+    const response = await c.send('POST', `/workout/sessions/${session.id}/exercises`, {
+      sessionId: session.id,
+      exerciseId: bench.id,
+    });
+    expect(response.status).toBe(200);
+
+    const reloaded = await json<SessionDetail>(c.get(`/workout/sessions/${session.id}`));
+    expect(reloaded.exercisePlans).toHaveLength(1);
+    expect(reloaded.exercisePlans[0]).toMatchObject({
+      exercise: { id: bench.id },
+      targetSets: null,
+      restSeconds: 90,
+    });
+    expect(reloaded.sets).toHaveLength(0);
   });
 
   it('histórico paginado e last-sets', async () => {

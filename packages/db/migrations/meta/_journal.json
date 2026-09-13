@@ -29,6 +29,20 @@
       "when": 1786205924247,
       "tag": "0003_past_shinobi_shaw",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1789304733885,
+      "tag": "0004_uneven_frog_thor",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1789304752064,
+      "tag": "0005_seed_catalog",
+      "breakpoints": true
     }
   ]
 }

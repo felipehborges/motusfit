@@ -21,6 +21,7 @@ test('rotina → sessão → séries → concluir → histórico', async ({ page
   await page.getByLabel('Nome do exercício').fill(exerciseName);
   await page.getByRole('button', { name: 'Criar', exact: true }).click();
   await expect(page.getByText(exerciseName)).toBeVisible();
+  await page.getByLabel('Descanso (s)').fill('120');
   await page.getByRole('button', { name: 'Criar rotina' }).click();
   await expect(page.getByText('Push E2E')).toBeVisible();
 
@@ -34,7 +35,13 @@ test('rotina → sessão → séries → concluir → histórico', async ({ page
   const sets = page.locator('.mf-set-list > li');
   await expect(sets).toHaveCount(1);
   await expect(sets.nth(0)).toContainText(/60\s*kg\s*10\s*reps/);
-  await expect(page.locator('.mf-rest-timer')).toContainText(/\d+s/);
+  await expect(page.getByText('Salvo', { exact: true })).toBeVisible();
+  await expect(page.locator('.mf-rest-timer')).toContainText(/1(?:19|20)s/);
+
+  // O descanso configurado na rotina continua após recarregar a sessão.
+  await page.reload();
+  await expect(page.getByRole('heading', { name: 'Push E2E' })).toBeVisible();
+  await expect(page.locator('.mf-rest-timer')).toContainText(/1(?:1\d|20)s/);
 
   await page.getByLabel('Reps').fill('8');
   await page.getByLabel('Carga (kg)').fill('65');
@@ -52,4 +59,10 @@ test('rotina → sessão → séries → concluir → histórico', async ({ page
   // Histórico mostra a sessão concluída
   await expect(page.getByRole('heading', { name: 'Atividade recente' })).toBeVisible();
   await expect(page.getByText(/2\s*séries\s*1120\s*kg/)).toBeVisible();
+
+  // Logout encerra a sessão e a área protegida redireciona para o login.
+  await page.getByRole('button', { name: 'Sair' }).click();
+  await expect(page).toHaveURL(/\/login$/);
+  await page.goto('/app');
+  await expect(page).toHaveURL(/\/login$/);
 });

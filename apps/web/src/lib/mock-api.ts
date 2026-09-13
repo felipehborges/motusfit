@@ -1,6 +1,8 @@
 import type { Exercise, Routine, SessionDetail } from '@motusfit/contracts';
 
-export const DEMO_MODE = true;
+// O backend real é o padrão. A demonstração estática continua disponível
+// apenas quando explicitamente habilitada no build do cliente.
+export const DEMO_MODE = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
 
 const ids = {
   routine: '11111111-1111-4111-8111-111111111111',
@@ -52,6 +54,15 @@ const session: SessionDetail = {
   estimatedKcal: 320,
   notes: null,
   exercises,
+  exercisePlans: exercises.map((exercise, position) => ({
+    id: `77777777-7777-4777-8777-${String(position + 1).padStart(12, '0')}`,
+    exercise,
+    position,
+    targetSets: 3,
+    targetRepsMin: 8,
+    targetRepsMax: 12,
+    restSeconds: 90,
+  })),
   sets: [
     {
       id: '66666666-6666-4666-8666-000000000001',
@@ -133,6 +144,8 @@ export const mockFetch: typeof fetch = async (input, init) => {
   if (path === '/workout/sessions' && method === 'POST') return json(session);
   if (path.startsWith('/workout/sessions/') && path.endsWith('/finish'))
     return json({ ...session, finishedAt: '2026-09-02T13:00:00.000Z' });
+  if (path.startsWith('/workout/sessions/') && path.endsWith('/exercises'))
+    return json(session.exercisePlans[0]);
   if (path.startsWith('/workout/sessions/') && path.includes('/sets'))
     return json(method === 'DELETE' ? { deleted: true } : session.sets[0]);
   if (path.startsWith('/workout/sessions/')) return json(session);

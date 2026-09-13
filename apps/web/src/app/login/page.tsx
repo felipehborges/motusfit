@@ -4,7 +4,12 @@ import { AuthForm } from '@/features/auth/auth-form';
 
 export const metadata = { title: 'Entrar — MotusFit' };
 
-export default function LoginPage() {
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ reason?: string }>;
+}) {
+  const { reason } = await searchParams;
   return (
     <main className="mf-auth-page">
       <Card className="mf-auth-card">
@@ -12,7 +17,7 @@ export default function LoginPage() {
           <p className="mf-eyebrow">MotusFit · força em movimento</p>
           <h1>Bem-vindo de volta</h1>
           <p>Entre para continuar registrando seus treinos.</p>
-          <AuthForm mode="login" />
+          <AuthForm mode="login" sessionExpired={reason === 'session-expired'} />
           <p className="mt-6 text-sm">
             Ainda não tem uma conta?{' '}
             <Link

@@ -1,82 +1,68 @@
 # MotusFit — handoff entre dispositivos
 
-Atualizado em: 2026-09-03 02:20 UTC
-Dispositivo: não identificado nesta sessão
-Branch: `master`
-Sincronização: `master` foi enviado com sucesso para `origin` no commit `bf8b4d5`; a alteração local pré-existente em `apps/api/package.json` permanece fora dos commits e sem stage.
+Atualizado em: 2026-09-13 13:16 UTC
+Dispositivo: não identificado nesta sessão (Windows)
+Branch: `main`, baseada no commit `5c6e14e`; a antiga `master` permanece nesse commit.
+Sincronização: trabalho funcional pronto para commit/push em `origin/main`. As alterações visuais pré-existentes em `apps/web/src/app/globals.css` e `apps/web/src/features/dashboard/today-card.tsx` permanecem locais e fora do escopo funcional.
 
 ## Objetivo atual
 
-Validar a UX e as regras visuais do web com dados locais, sem qualquer requisição ao backend, preservando Next.js/Vercel e sem alterar `apps/mobile` ou contratos funcionais.
+Adotar `main` como branch canônica; reativar e endurecer backend/banco; proteger a área autenticada; melhorar persistência da sessão de treino; automatizar o catálogo; orientar configuração de Render, Vercel, Neon e inspeção de usuários.
 
-## Estado desta sessão
+## Implementado
 
-- shadcn/ui foi inicializado em `apps/web` com Tailwind CSS v4 e alias `@/`; `components.json` e `src/lib/utils.ts` foram adicionados.
-- Componentes instalados: `button`, `card`, `badge`, `input`, `label`, `separator` e `skeleton`. A configuração adicionou `class-variance-authority`, `clsx`, `radix-ui`, `tailwind-merge` e `tw-animate-css` ao app web.
-- `src/app/globals.css` agora define tokens neobrutalistas (superfícies creme, lima e laranja, bordas pretas de 3 px, sombras deslocadas e foco visível) e aplica a mesma linguagem aos primitives shadcn e aos compostos específicos do produto.
-- Login e cadastro foram convertidos para `Card`, `Input`, `Label` e `Button` shadcn. Dashboard, treinos, sessão ativa, estatísticas e perfil passaram a usar `Card`, `Button` e `Badge` shadcn nas superfícies e ações migradas.
-- `src/components/ui.tsx` deixou de definir `Card` próprio e `StatusPill`; agora apenas reexporta o `Card` shadcn e mantém cabeçalhos/métricas como composições específicas de apresentação, sem substituir regras de negócio.
-- Nenhum arquivo de `apps/mobile` foi alterado. A alteração local e staged em `apps/api/package.json` foi preservada e não foi incluída neste trabalho.
-- O web agora está deliberadamente em modo de demonstração (`DEMO_MODE = true` em `apps/web/src/lib/mock-api.ts`). Todas as chamadas do cliente tipado são interceptadas localmente com dados de treino, rotinas, sessão, perfil e estatísticas; login e cadastro apenas navegam para a demonstração. Não há requisições à API nesse modo.
-- As miniaturas remotas da biblioteca de exercícios também foram substituídas por placeholders locais no modo de demonstração, evitando chamadas externas durante a revisão de UI.
-- Para religar o backend após a aprovação da UI, mudar `DEMO_MODE` para `false` e restaurar autenticação real no fluxo de `AuthForm`; não alterar os contratos nem os endpoints.
+- Checkout local alinhado em `main`; `origin/main` era ancestral direto, portanto o alinhamento é fast-forward.
+- `render.yaml` fixa `branch: main`. Ainda é necessário selecionar `main` como default branch no GitHub e Production Branch na Vercel pelo dashboard.
+- Backend real é padrão; demo só ativa com `NEXT_PUBLIC_DEMO_MODE=true`.
+- Produção recusa inicialização sem `DATABASE_URL` e com `AUTH_ENABLED=false`.
+- Health/readiness executa consulta no banco.
+- Área `/app` consulta sessão antes de renderizar, redireciona visitante para login, trata 401 global como sessão expirada e oferece logout. O topo usa nome/iniciais reais.
+- Sets mostram `Salvando…`, `Salvo` ou erro com retry. Retry mantém o mesmo `clientId`, inclusive nas tentativas automáticas.
+- Descanso usa o `restSeconds` da rotina, guarda o instante final no `localStorage` e continua após reload/suspensão.
+- Nova tabela `session_exercises` congela a prescrição no início da sessão e representa exercícios avulsos sem set âncora. Migração retroativa copia prescrições e exercícios presentes em sets antigos.
+- Endpoint `POST /workout/sessions/{sessionId}/exercises` adiciona exercício avulso; clientes antigos que enviam diretamente um set continuam compatíveis.
+- Migration `0005_seed_catalog` instala idempotentemente os 60 exercícios em qualquer banco novo ou existente; seed manual continua idempotente, mas não é mais obrigatório no deploy.
+- Banco PGlite local atual está migrado e contém apenas seis contas E2E geradas pelas validações. A base anterior permanece preservada em `apps/api/.data/motusfit-backup-20260912-1930`.
 
-## Validação desta sessão
+## Arquivos funcionais principais
 
-- `pnpm --filter web typecheck`: passou.
-- `pnpm --filter web build`: passou (Next.js 16.2.10).
-- Após a introdução do modo de demonstração: `pnpm --filter web typecheck` e `pnpm --filter web build` passaram novamente.
-- Preview local compilou em `http://localhost:3001/login`; a abertura foi enviada ao painel do Codex.
-- E2E: não concluiu nesta máquina. A porta `3000`, exigida por `apps/web/playwright.config.ts`, está ocupada por outro projeto (`personal-finance-app`); o Playwright reutilizou esse servidor e ficou bloqueado. Não foi interrompido nenhum processo do usuário. Para validar, liberar a porta 3000 ou tornar a porta do Playwright configurável e executar `pnpm --filter web test:e2e`.
+- Auth/web: `apps/web/src/components/app-shell.tsx`, `apps/web/src/lib/providers.tsx`, `apps/web/src/features/auth/auth-form.tsx`, páginas/layout, `backend.css` e E2E.
+- Treino: contrato compartilhado, router/repository/testes da API e `session-view.tsx`.
+- Banco: schema de workout, migrations `0004`/`0005`, journal/snapshots e documentação.
+- Runtime/deploy: `.env.example`, `apps/api/package.json`, validação env, health, `render.yaml` e docs.
 
-## Estado confirmado
+## Validações concluídas
 
-- Stack planejada: web Next.js 16 na Vercel, API Hono/Node 24 no Render e PostgreSQL no Neon.
-- O repositório contém `render.yaml`, `apps/api/Dockerfile`, migrations Drizzle e proxy web `/api/*` para a API.
-- A publicação existe e está acessível em `https://motusfit-web.vercel.app`; o cadastro público abre em `/signup`.
-- Infraestrutura confirmada: projeto `motusfit` no Neon (São Paulo), API `motusfit-api` no Render e projeto `motusfit-web` na Vercel.
-- O health check público funciona tanto diretamente no Render quanto através do proxy da Vercel (`/api/v1/health`, HTTP 200).
-- Validação autenticada em produção concluída com uma conta de teste descartável: cadastro, login, criação de rotina/exercício, duas séries (10×60 kg e 8×65 kg), conclusão, histórico e estatísticas persistiram no Neon. O histórico e as estatísticas confirmaram 2 séries, 1.120 kg e 1 sessão concluída.
-- O Render acompanhava a branch `main`, enquanto a Vercel acompanhava `master`. As branches foram alinhadas em `179a35f` para evitar novos deploys defasados.
-- Build de produção da web passou após a correção de autenticação.
-- Typecheck da web passou.
-- E2E da web passou: 2 testes críticos (cadastro → treino → histórico e cadastro → treino → estatísticas) passaram; 1 teste de diário permanece intencionalmente ignorado porque nutrição está desativada.
-- Testes passaram: core 14/14 e API 31/31.
-- Site e API funcionam localmente com Node 24; web em `:3000` e API em `:3001`.
-- O banco local é PGlite; produção deve obrigatoriamente receber `DATABASE_URL` persistente do Neon com SSL.
-- A skill portátil `.agents/skills/pc-integration/SKILL.md` e o `AGENTS.md` da raiz foram criados. Todo agente deve ler e atualizar este arquivo em cada tarefa.
-- Foi preparado um prompt curto para replicar a mesma skill, `AGENTS.md` e arquivo de handoff nos outros projetos do usuário.
+- `pnpm --filter @motusfit/api test`: 34/34 testes passaram em 6 arquivos.
+- `pnpm typecheck`: 9/9 tarefas passaram, incluindo web, mobile, API, contratos e DB.
+- `pnpm --filter web build`: passou com Next.js 16.2.10.
+- `pnpm --filter web test:e2e`: 2 fluxos críticos passaram; 1 nutrição ignorado por escopo. O fluxo cobre auth, treino, descanso de 120 s persistido após reload, idempotência observável, conclusão, histórico, logout e bloqueio de `/app`.
+- `pnpm --filter @motusfit/core test`: 14/14 passaram.
+- Biome passou nos arquivos funcionais alterados; `git diff --check` passou.
+- `drizzle-kit check`: schema/migrations consistentes.
+- `pnpm db:seed`: confirmou catálogo completo com 60 exercícios, sem duplicar.
 
-## Bloqueador de publicação resolvido
+## Usuários e produção
 
-Em produção, o Docker define `NODE_ENV=production`, ativando autenticação na API. As páginas `apps/web/src/app/login/page.tsx` e `apps/web/src/app/signup/page.tsx` agora exibem `apps/web/src/features/auth/auth-form.tsx` em vez de redirecionar para `/app`. O Playwright sobe a API com `NODE_ENV=test`, portanto testa cadastro real e sessão autenticada.
+- Não foi possível listar usuários do Neon porque `DATABASE_URL` de produção não está disponível neste checkout. Não inferir que as seis contas locais existem em produção.
+- Para ver contas: Neon Console → projeto MotusFit → Tables → tabela `users`; ou SQL Editor com `SELECT id, name, email, email_verified, created_at FROM users ORDER BY created_at DESC;`. Não consultar/copiar a coluna `accounts.password`; ela contém hash, não senha recuperável.
+- Criar usuário de teste pela tela `/signup` depois do deploy. Nunca registrar a senha neste handoff.
+- Render: serviço `motusfit-api` → Settings/Build & Deploy, branch `main`; Environment deve conter `DATABASE_URL`, `BETTER_AUTH_URL`, `CORS_ORIGINS` e segredo de auth.
+- Vercel: projeto `motusfit-web` → Settings → Environments → Production → Branch Tracking = `main`; Environment Variables deve conter `API_URL`; `NEXT_PUBLIC_DEMO_MODE` deve estar ausente ou `false`.
+- GitHub: repository Settings → Branches/Default branch → `main` após `origin/main` receber o commit.
 
-## Validação E2E
+## Pendências após publicação
 
-O Chromium do Playwright foi instalado/atualizado neste PC. Os testes `apps/web/e2e/workout.spec.ts` e `apps/web/e2e/stats.spec.ts` foram atualizados para a interface atual e passaram. A suíte tem 2 testes aprovados e 1 ignorado (nutrição desativada).
+1. Alterar default/production branch nos dashboards de GitHub e Vercel; confirmar Render em `main`.
+2. Aguardar deploys e validar health direto/proxy.
+3. Criar conta de teste em produção e executar signup → rotina → treino → reload → concluir → histórico/estatísticas → logout/login.
+4. Consultar `users` no Neon e confirmar a conta; testar isolamento com uma segunda conta.
+5. Decidir se as alterações visuais locais devem ser commitadas separadamente.
+6. Antes de convidar amigos, configurar backup periódico e uma mensagem simples de beta/privacidade.
 
-O comando `pnpm check` ainda falha no Biome porque o checkout do Windows contém CRLF em dezenas de arquivos e a configuração exige LF. Não foi aplicada uma reformatação global para evitar um diff mecânico fora do escopo. `pnpm typecheck`, `pnpm test` e `pnpm build` passaram separadamente.
+## Cuidados duráveis
 
-## Próximos passos
-
-1. Testar o fluxo no celular e, se desejado, adicionar `https://motusfit-web.vercel.app` à tela inicial.
-2. Opcional: apagar os dados de teste de produção. Há uma rotina concluída válida de teste e uma sessão vazia “Em andamento”, originada pela retomada do navegador; não remover sem confirmação explícita do usuário.
-
-## Cuidados
-
-- Antes de continuar em outro dispositivo, executar `git pull --ff-only` e ler este arquivo.
-- Não sobrescrever mudanças locais existentes sem inspecionar `git status` e o diff.
-- Nunca registrar segredos ou connection strings neste arquivo.
-
-## Verificação desta sessão
-
-- Validação realizada: inspeção de `docs/deployment.md`, `render.yaml`, remotes Git e estado do checkout.
-- Resultado: deploy planejado para Vercel (web), Render (API) e Neon (PostgreSQL), mas não há evidência de URL ou publicação ativa. Nenhuma configuração de hosting foi alterada.
-- Próxima ação recomendada: concluir a correção de autenticação e então realizar os passos de deploy documentados; após isso, registrar as URLs públicas (sem segredos) neste arquivo.
-
-## Orientação da retomada
-
-- A correção de autenticação está publicada na Vercel: `https://motusfit-web.vercel.app/signup` exibe o formulário de cadastro.
-- Nenhum segredo foi revelado ou alterado. Há somente a alteração local do usuário em `apps/api/package.json`.
-- Verificação de UI: o projeto não usa shadcn/ui. Há componentes próprios em `apps/web/src/components/ui.tsx` (`Card`, `PageHeader`, `SectionHeader`, `Metric` e `StatusPill`), estilizados por classes `mf-*`; não há dependências ou configuração do shadcn/Radix.
-- Decisão de arquitetura: shadcn/ui pode substituir os componentes da aplicação web Next.js (`apps/web`) e manter boa experiência no navegador/celular como PWA. Não é compatível diretamente com o app Expo/React Native em `apps/mobile`; uma futura UI nativa deve usar componentes próprios React Native ou uma biblioteca nativa equivalente.
+- Usar `pc-integration` no início/fim de toda tarefa.
+- Não registrar secrets, cookies, connection strings ou senhas.
+- Não remover a base PGlite de backup sem confirmação explícita.
+- Nutrição/billing seguem desativados; mobile continua secundário ao web.

@@ -1,0 +1,72 @@
+.mf-account-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.mf-account-actions > span {
+  max-width: 180px;
+  overflow: hidden;
+  color: var(--ink);
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mf-signout {
+  display: inline-flex;
+  min-height: 36px;
+  align-items: center;
+  gap: 6px;
+  padding: 0 11px;
+  border: 1.5px solid var(--line);
+  border-radius: 10px;
+  background: var(--paper);
+  color: var(--ink);
+  font: inherit;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.mf-signout:hover {
+  transform: translateY(-1px);
+  box-shadow: 2px 2px 0 var(--line);
+}
+
+.mf-save-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.mf-save-status.success {
+  color: #287a44;
+}
+
+.mf-save-status.error {
+  color: #b42318;
+}
+
+.mf-save-status button {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+@media (max-width: 780px) {
+  .mf-account-actions > span,
+  .mf-signout > span {
+    display: none;
+  }
+
+  .mf-signout {
+    width: 37px;
+    padding: 0;
+    justify-content: center;
+  }
+}

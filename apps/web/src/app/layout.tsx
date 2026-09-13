@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import './globals.css';
+import './backend.css';
 import { Geist } from 'next/font/google';
 import { Providers } from '@/lib/providers';
 import { cn } from '@/lib/utils';

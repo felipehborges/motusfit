@@ -68,12 +68,19 @@ export function SessionView({
         <Metric label="Volume" value={Math.round(session.volumeKg)} unit="kg" tone="blue" />
         <Metric label="Séries" value={session.totalSets} unit="concluídas" tone="lime" />
       </div>
+      {finish.isError && (
+        <p className="mf-save-status error" role="alert">
+          Não foi possível concluir o treino. Verifique a conexão e tente novamente.
+        </p>
+      )}
       <div className="mf-session-list">
-        {session.exercises.map((exercise) => (
+        {session.exercisePlans.map((plan) => (
           <ExerciseBlock
-            key={exercise.id}
+            key={plan.id}
             session={session}
-            exercise={exercise}
+            exercise={plan.exercise}
+            restSeconds={plan.restSeconds}
+            targetSets={plan.targetSets}
             readOnly={readOnly}
             onChanged={invalidate}
           />
@@ -92,11 +99,15 @@ export function SessionView({
 function ExerciseBlock({
   session,
   exercise,
+  restSeconds,
+  targetSets,
   readOnly,
   onChanged,
 }: {
   session: SessionDetail;
   exercise: Exercise;
+  restSeconds: number;
+  targetSets: number | null;
   readOnly: boolean;
   onChanged: () => void;
 }) {
@@ -121,7 +132,10 @@ function ExerciseBlock({
           <p className="mf-eyebrow">Exercício</p>
           <h3>{exercise.name}</h3>
         </div>
-        <Badge variant="secondary">{sets.length} séries</Badge>
+        <Badge variant="secondary">
+          {sets.length}
+          {targetSets === null ? '' : `/${targetSets}`} séries
+        </Badge>
       </div>
       <ol className="mf-set-list">
         {sets.map((set, index) => (
@@ -155,6 +169,7 @@ function ExerciseBlock({
           exerciseId={exercise.id}
           suggestedReps={suggestion?.reps}
           suggestedWeight={suggestion?.weightKg}
+          restSeconds={restSeconds}
           onAdded={onChanged}
         />
       )}
@@ -167,17 +182,31 @@ function SetForm({
   exerciseId,
   suggestedReps,
   suggestedWeight,
+  restSeconds,
   onAdded,
 }: {
   sessionId: string;
   exerciseId: string;
   suggestedReps?: number | undefined;
   suggestedWeight?: number | undefined;
+  restSeconds: number;
   onAdded: () => void;
 }) {
   const [reps, setReps] = useState('');
   const [weight, setWeight] = useState('');
-  const [resting, setResting] = useState(0);
+  const timerKey = `motusfit:rest:${sessionId}:${exerciseId}`;
+  const [restUntil, setRestUntil] = useState<number | null>(null);
+  const [now, setNow] = useState(() => Date.now());
+  const [retryPayload, setRetryPayload] = useState<{
+    sessionId: string;
+    exerciseId: string;
+    reps: number;
+    weightKg: number;
+    restSeconds: number;
+    completed: true;
+    clientId: string;
+  } | null>(null);
+  const [saved, setSaved] = useState(false);
 
   // Sugestão da última sessão pré-preenche uma única vez (docs/product.md fluxo 2)
   useEffect(() => {
@@ -186,33 +215,74 @@ function SetForm({
   }, [suggestedReps, suggestedWeight]);
 
   useEffect(() => {
-    if (resting <= 0) return;
-    const timer = setTimeout(() => setResting((r) => r - 1), 1000);
-    return () => clearTimeout(timer);
-  }, [resting]);
+    const stored = Number(window.localStorage.getItem(timerKey));
+    if (Number.isFinite(stored) && stored > Date.now()) setRestUntil(stored);
+  }, [timerKey]);
+
+  useEffect(() => {
+    if (restUntil === null) return;
+    const tick = () => {
+      const current = Date.now();
+      setNow(current);
+      if (current >= restUntil) {
+        window.localStorage.removeItem(timerKey);
+        setRestUntil(null);
+      }
+    };
+    tick();
+    const timer = window.setInterval(tick, 1000);
+    return () => window.clearInterval(timer);
+  }, [restUntil, timerKey]);
+
+  useEffect(() => {
+    if (!saved) return;
+    const timer = window.setTimeout(() => setSaved(false), 2000);
+    return () => window.clearTimeout(timer);
+  }, [saved]);
 
   const addSet = useMutation(
     api.workout.sessions.addSet.mutationOptions({
       onSuccess: () => {
-        setResting(90);
+        const until = Date.now() + restSeconds * 1000;
+        if (restSeconds > 0) {
+          window.localStorage.setItem(timerKey, String(until));
+          setNow(Date.now());
+          setRestUntil(until);
+        }
+        setRetryPayload(null);
+        setSaved(true);
         onAdded();
       },
+      retry: 2,
+      retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 4000),
     }),
   );
+
+  const submitSet = (payload = retryPayload) => {
+    const nextPayload =
+      payload ??
+      ({
+        sessionId,
+        exerciseId,
+        reps: Number(reps),
+        weightKg: Number(weight),
+        restSeconds,
+        completed: true,
+        clientId: crypto.randomUUID(),
+      } as const);
+    setSaved(false);
+    setRetryPayload(nextPayload);
+    addSet.mutate(nextPayload);
+  };
+
+  const resting = restUntil === null ? 0 : Math.max(0, Math.ceil((restUntil - now) / 1000));
 
   return (
     <form
       className="mf-set-form"
       onSubmit={(e) => {
         e.preventDefault();
-        addSet.mutate({
-          sessionId,
-          exerciseId,
-          reps: Number(reps),
-          weightKg: Number(weight),
-          completed: true,
-          clientId: crypto.randomUUID(),
-        });
+        submitSet(null);
       }}
     >
       <label className="mf-field" htmlFor={`${sessionId}-${exerciseId}-reps`}>
@@ -241,8 +311,17 @@ function SetForm({
         />
       </label>
       <Button type="submit" disabled={addSet.isPending}>
-        <Check size={15} /> Série feita
+        <Check size={15} /> {addSet.isPending ? 'Salvando…' : 'Série feita'}
       </Button>
+      {saved && <span className="mf-save-status success">Salvo</span>}
+      {addSet.isError && (
+        <span className="mf-save-status error" role="alert">
+          Não salvou.
+          <button type="button" onClick={() => submitSet()}>
+            Tentar novamente
+          </button>
+        </span>
+      )}
       {resting > 0 && (
         <span className="mf-rest-timer">
           <Clock3 size={14} /> {resting}s
@@ -258,7 +337,9 @@ function AddExercise({ session, onChanged }: { session: SessionDetail; onChanged
     ...api.workout.exercises.search.queryOptions({ input: { query, limit: 10 } }),
     enabled: query.length > 0,
   });
-  const addSet = useMutation(api.workout.sessions.addSet.mutationOptions({ onSuccess: onChanged }));
+  const addExercise = useMutation(
+    api.workout.sessions.addExercise.mutationOptions({ onSuccess: onChanged }),
+  );
 
   const existing = new Set(session.exercises.map((e) => e.id));
 
@@ -290,14 +371,9 @@ function AddExercise({ session, onChanged }: { session: SessionDetail; onChanged
                   type="button"
                   className="mf-food-result"
                   onClick={() => {
-                    // Primeiro set "âncora" adiciona o exercício à sessão
-                    addSet.mutate({
+                    addExercise.mutate({
                       sessionId: session.id,
                       exerciseId: exercise.id,
-                      reps: 1,
-                      weightKg: 0,
-                      completed: false,
-                      clientId: crypto.randomUUID(),
                     });
                     setQuery('');
                   }}
@@ -307,6 +383,11 @@ function AddExercise({ session, onChanged }: { session: SessionDetail; onChanged
               </li>
             ))}
         </ul>
+      )}
+      {addExercise.isError && (
+        <p className="mf-save-status error" role="alert">
+          Não foi possível adicionar o exercício.
+        </p>
       )}
     </div>
   );

@@ -64,6 +64,17 @@ export const setSchema = z.object({
 });
 export type WorkoutSet = z.infer<typeof setSchema>;
 
+export const sessionExerciseSchema = z.object({
+  id: z.uuid(),
+  exercise: exerciseSchema,
+  position: z.number().int().nonnegative(),
+  targetSets: z.number().int().min(1).max(20).nullable(),
+  targetRepsMin: z.number().int().min(1).max(100).nullable(),
+  targetRepsMax: z.number().int().min(1).max(100).nullable(),
+  restSeconds: z.number().int().min(0).max(3600),
+});
+export type SessionExercise = z.infer<typeof sessionExerciseSchema>;
+
 export const sessionSummarySchema = z.object({
   id: z.uuid(),
   title: z.string(),
@@ -80,6 +91,7 @@ export const sessionDetailSchema = sessionSummarySchema.extend({
   notes: z.string().nullable(),
   sets: z.array(setSchema),
   exercises: z.array(exerciseSchema),
+  exercisePlans: z.array(sessionExerciseSchema),
 });
 export type SessionDetail = z.infer<typeof sessionDetailSchema>;
 
@@ -140,6 +152,14 @@ export const workoutContract = {
         }),
       )
       .output(sessionDetailSchema),
+    addExercise: oc
+      .route({
+        method: 'POST',
+        path: '/workout/sessions/{sessionId}/exercises',
+        tags: ['workout'],
+      })
+      .input(z.object({ sessionId: z.uuid(), exerciseId: z.uuid() }))
+      .output(sessionExerciseSchema),
     addSet: oc
       .route({ method: 'POST', path: '/workout/sessions/{sessionId}/sets', tags: ['workout'] })
       .input(

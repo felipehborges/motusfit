@@ -41,6 +41,9 @@ routine_exercises        id, routine_id→routines (cascade), exercise_id→exer
 workout_sessions         id, user_id→users, routine_id→routines NULL (treino livre), title,
                          started_at, finished_at NULL, body_weight_kg_snapshot NULL, notes NULL
                          IX (user_id, started_at)
+session_exercises        id, session_id→workout_sessions (cascade), exercise_id→exercises (restrict),
+                         position, target_sets/reps NULL para exercício avulso, rest_seconds
+                         UQ (session_id, exercise_id), UQ (session_id, position)
 workout_sets             id, session_id→workout_sessions (cascade), exercise_id→exercises (restrict),
                          position int, reps int, weight_kg numeric(6,2), rest_seconds int NULL,
                          completed bool default true
@@ -51,6 +54,7 @@ Decisões notáveis:
 - **Recentes** de alimentos não têm tabela: derivados de `diary_entries` (`DISTINCT ON food_id ORDER BY logged_at DESC LIMIT 20`).
 - **Totais do dia e volume não são armazenados** — calculados na leitura (volume MVP não justifica denormalização; repositories isolam a query para otimizar depois).
 - `body_weight_kg_snapshot` na sessão congela o peso usado na estimativa de kcal (perfil pode mudar depois).
+- `session_exercises` congela a prescrição da rotina quando a sessão começa e representa exercícios avulsos sem criar sets falsos.
 - Metas com vigência (`effective_from/to`) preservam histórico para gráficos futuros.
 - Tabelas do Better Auth são geradas pelo adapter Drizzle e vivem no mesmo schema.
 
@@ -59,6 +63,7 @@ Decisões notáveis:
 - `drizzle-kit generate` a partir do schema TS → SQL em `packages/db/migrations/`; **migrations commitadas e imutáveis** após merge.
 - Aplicação: `drizzle-kit migrate` (dev) / passo de deploy (produção). Nunca `db push` fora de protótipo local.
 - Toda mudança de schema acompanha a feature que a exige (mesmo PR/commit).
+- O catálogo inicial de exercícios vive na migration de dados `0005_seed_catalog`; ambientes novos ou existentes recebem os itens ausentes automaticamente no próximo boot.
 
 ## Ambientes
 

@@ -36,7 +36,15 @@ const envSchema = z
       message:
         'BILLING_ENABLED=true exige STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET e STRIPE_PREMIUM_MONTHLY_PRICE_ID',
     },
-  );
+  )
+  .refine((env) => env.NODE_ENV !== 'production' || Boolean(env.DATABASE_URL), {
+    message: 'Produção exige DATABASE_URL para um PostgreSQL persistente',
+    path: ['DATABASE_URL'],
+  })
+  .refine((env) => env.NODE_ENV !== 'production' || env.AUTH_ENABLED !== false, {
+    message: 'Produção não permite AUTH_ENABLED=false',
+    path: ['AUTH_ENABLED'],
+  });
 
 type ParsedEnv = z.infer<typeof envSchema>;
 
@@ -54,8 +62,8 @@ export function loadEnv(source: NodeJS.ProcessEnv = process.env): Env {
   }
   return {
     ...result.data,
-    // Em produção e testes a autenticação continua sendo obrigatória. No desenvolvimento,
-    // o app usa um único usuário local até o fluxo de contas voltar a ser necessário.
+    // Em produção e testes a autenticação é obrigatória. No desenvolvimento,
+    // AUTH_ENABLED pode manter o perfil local ou exercitar o fluxo real de contas.
     authEnabled: result.data.AUTH_ENABLED ?? result.data.NODE_ENV !== 'development',
   };
 }

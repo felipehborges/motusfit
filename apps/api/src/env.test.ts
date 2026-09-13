@@ -15,4 +15,25 @@ describe('loadEnv', () => {
   it('rejeita sem BETTER_AUTH_SECRET', () => {
     expect(() => loadEnv({})).toThrow();
   });
+
+  it('exige banco persistente e autenticação em produção', () => {
+    expect(() => loadEnv({ ...base, NODE_ENV: 'production' })).toThrow(/DATABASE_URL/);
+    expect(() =>
+      loadEnv({
+        ...base,
+        NODE_ENV: 'production',
+        DATABASE_URL: 'postgres://user:pass@db.example.com/motusfit',
+        AUTH_ENABLED: 'false',
+      }),
+    ).toThrow(/AUTH_ENABLED/);
+  });
+
+  it('aceita produção com banco persistente e auth padrão', () => {
+    const env = loadEnv({
+      ...base,
+      NODE_ENV: 'production',
+      DATABASE_URL: 'postgres://user:pass@db.example.com/motusfit',
+    });
+    expect(env.authEnabled).toBe(true);
+  });
 });

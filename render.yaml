@@ -5,6 +5,7 @@ services:
   - type: web
     name: motusfit-api
     runtime: docker
+    branch: main
     dockerfilePath: ./apps/api/Dockerfile
     dockerContext: .
     plan: free

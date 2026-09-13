@@ -1,9 +1,20 @@
 'use client';
 
-import { Activity, BarChart3, Dumbbell, LayoutDashboard, Settings2, Sparkles } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
+import {
+  Activity,
+  BarChart3,
+  Dumbbell,
+  LayoutDashboard,
+  LogOut,
+  Settings2,
+  Sparkles,
+} from 'lucide-react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import type { ReactNode } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
+import { type ReactNode, useEffect } from 'react';
+import { signOut, useSession } from '@/lib/auth-client';
+import { DEMO_MODE } from '@/lib/mock-api';
 
 const NAV = [
   { href: '/app', label: 'Visão geral', icon: LayoutDashboard, exact: true },
@@ -13,7 +24,54 @@ const NAV = [
 ];
 
 export function AppShell({ children }: { children: ReactNode }) {
+  if (DEMO_MODE) return <ShellLayout userName="Demonstração">{children}</ShellLayout>;
+  return <AuthenticatedAppShell>{children}</AuthenticatedAppShell>;
+}
+
+function AuthenticatedAppShell({ children }: { children: ReactNode }) {
+  const router = useRouter();
+  const queryClient = useQueryClient();
+  const session = useSession();
+
+  useEffect(() => {
+    if (!session.isPending && !session.data) router.replace('/login');
+  }, [router, session.data, session.isPending]);
+
+  if (session.isPending) return <p className="mf-loading">Verificando sua sessão…</p>;
+  if (!session.data) return <p className="mf-loading">Redirecionando para entrar…</p>;
+
+  return (
+    <ShellLayout
+      userName={session.data.user.name}
+      onSignOut={async () => {
+        await signOut();
+        queryClient.clear();
+        router.replace('/login');
+        router.refresh();
+      }}
+    >
+      {children}
+    </ShellLayout>
+  );
+}
+
+function ShellLayout({
+  children,
+  userName,
+  onSignOut,
+}: {
+  children: ReactNode;
+  userName: string;
+  onSignOut?: (() => Promise<void>) | undefined;
+}) {
   const pathname = usePathname();
+  const initials =
+    userName
+      .trim()
+      .split(/\s+/)
+      .slice(0, 2)
+      .map((part) => part[0]?.toUpperCase())
+      .join('') || 'MF';
 
   return (
     <div className="mf-shell">
@@ -57,9 +115,17 @@ export function AppShell({ children }: { children: ReactNode }) {
             <span className="mf-live-dot" />
             <span>Jornada ativa</span>
           </div>
-          <Link href="/app/perfil" className="mf-avatar" aria-label="Abrir perfil">
-            FB
-          </Link>
+          <div className="mf-account-actions">
+            <span>{userName}</span>
+            <Link href="/app/perfil" className="mf-avatar" aria-label="Abrir perfil">
+              {initials}
+            </Link>
+            {onSignOut && (
+              <button type="button" className="mf-signout" onClick={onSignOut}>
+                <LogOut size={15} /> <span>Sair</span>
+              </button>
+            )}
+          </div>
         </header>
         <main className="mf-content">{children}</main>
       </div>

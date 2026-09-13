@@ -1,13 +1,18 @@
+import { sql } from 'drizzle-orm';
 import { implementedContract } from './implemented';
 import { identityRouter } from './modules/identity';
 import { nutritionRouter } from './modules/nutrition';
 import { statsRouter } from './modules/stats';
 import { workoutRouter } from './modules/workout';
 
-const health = implementedContract.health.handler(() => ({
-  status: 'ok' as const,
-  version: '0.0.0',
-}));
+const health = implementedContract.health.handler(async ({ context }) => {
+  // Readiness real: o Render só recebe 200 quando a API também consulta o banco.
+  await context.db.execute(sql`select 1`);
+  return {
+    status: 'ok' as const,
+    version: '0.0.0',
+  };
+});
 
 /** Router v1: implementação do contrato (@motusfit/contracts). */
 export const router = implementedContract.router({

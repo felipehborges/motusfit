@@ -2,6 +2,7 @@ import { ORPCError } from '@orpc/server';
 import { requireAuth } from '../../context';
 import { implementedContract } from '../../implemented';
 import {
+  addSessionExercise,
   addSet,
   createExercise,
   createRoutine,
@@ -59,6 +60,23 @@ export const workoutRouter = {
       const session = await startSession(context.db, context.user.id, input);
       if (!session) throw new ORPCError('NOT_FOUND', { message: 'Rotina não encontrada' });
       return session;
+    }),
+    addExercise: os.sessions.addExercise.use(requireAuth).handler(async ({ context, input }) => {
+      const result = await addSessionExercise(
+        context.db,
+        context.user.id,
+        input.sessionId,
+        input.exerciseId,
+      );
+      if (result === 'session-not-found' || result === 'exercise-not-found') {
+        throw new ORPCError('NOT_FOUND', { message: 'Sessão ou exercício não encontrado' });
+      }
+      if (result === 'session-finished') {
+        throw new ORPCError('CONFLICT', {
+          message: 'Sessão já concluída não aceita novos exercícios',
+        });
+      }
+      return result.exercise;
     }),
     addSet: os.sessions.addSet.use(requireAuth).handler(async ({ context, input }) => {
       const result = await addSet(context.db, context.user.id, input);

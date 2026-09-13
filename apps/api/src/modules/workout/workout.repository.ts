@@ -3,6 +3,7 @@ import type {
   MuscleGroup,
   Routine,
   SessionDetail,
+  SessionExercise,
   SessionSummary,
   WorkoutSet,
 } from '@motusfit/contracts';
@@ -33,6 +34,21 @@ function toSet(row: SetRow): WorkoutSet {
     weightKg: Number(row.weightKg),
     restSeconds: row.restSeconds,
     completed: row.completed,
+  };
+}
+
+function toSessionExercise(
+  row: typeof schema.sessionExercises.$inferSelect,
+  exercise: ExerciseRow,
+): SessionExercise {
+  return {
+    id: row.id,
+    exercise: toExercise(exercise),
+    position: row.position,
+    targetSets: row.targetSets,
+    targetRepsMin: row.targetRepsMin,
+    targetRepsMax: row.targetRepsMax,
+    restSeconds: row.restSeconds,
   };
 }
 
@@ -273,30 +289,20 @@ async function loadSessionDetail(db: Database, row: SessionRow): Promise<Session
     .orderBy(schema.workoutSets.position);
   const sets = setRows.map(toSet);
 
-  const exerciseIds = [...new Set(sets.map((s) => s.exerciseId))];
-  const exerciseRows = exerciseIds.length
-    ? await db.select().from(schema.exercises).where(inArray(schema.exercises.id, exerciseIds))
-    : [];
-
-  const sessionRoutineRows = row.routineId
-    ? await db
-        .select({ re: schema.routineExercises, exercise: schema.exercises })
-        .from(schema.routineExercises)
-        .innerJoin(schema.exercises, eq(schema.exercises.id, schema.routineExercises.exerciseId))
-        .where(eq(schema.routineExercises.routineId, row.routineId))
-        .orderBy(schema.routineExercises.position)
-    : [];
-
-  // Exercícios da sessão: os da rotina (ordem prescrita) + extras com sets
-  const byId = new Map<string, Exercise>();
-  for (const { exercise } of sessionRoutineRows) byId.set(exercise.id, toExercise(exercise));
-  for (const ex of exerciseRows) if (!byId.has(ex.id)) byId.set(ex.id, toExercise(ex));
+  const planRows = await db
+    .select({ plan: schema.sessionExercises, exercise: schema.exercises })
+    .from(schema.sessionExercises)
+    .innerJoin(schema.exercises, eq(schema.exercises.id, schema.sessionExercises.exerciseId))
+    .where(eq(schema.sessionExercises.sessionId, row.id))
+    .orderBy(schema.sessionExercises.position);
+  const exercisePlans = planRows.map(({ plan, exercise }) => toSessionExercise(plan, exercise));
 
   return {
     ...toSummary(row, sets),
     notes: row.notes,
     sets,
-    exercises: [...byId.values()],
+    exercises: exercisePlans.map((plan) => plan.exercise),
+    exercisePlans,
   };
 }
 
@@ -305,36 +311,59 @@ export async function startSession(
   userId: string,
   data: { routineId?: string | undefined; title?: string | undefined },
 ): Promise<SessionDetail | null> {
-  let title = data.title ?? 'Treino livre';
-  if (data.routineId) {
-    const routineRows = await db
-      .select()
-      .from(schema.routines)
-      .where(and(eq(schema.routines.id, data.routineId), eq(schema.routines.userId, userId)))
+  return db.transaction(async (tx) => {
+    const transaction = tx as unknown as Database;
+    let title = data.title ?? 'Treino livre';
+    let routineItems: (typeof schema.routineExercises.$inferSelect)[] = [];
+    if (data.routineId) {
+      const routineRows = await transaction
+        .select()
+        .from(schema.routines)
+        .where(and(eq(schema.routines.id, data.routineId), eq(schema.routines.userId, userId)))
+        .limit(1);
+      const routine = routineRows[0];
+      if (!routine) return null;
+      title = data.title ?? routine.name;
+      routineItems = await transaction
+        .select()
+        .from(schema.routineExercises)
+        .where(eq(schema.routineExercises.routineId, routine.id))
+        .orderBy(schema.routineExercises.position);
+    }
+
+    const profile = await transaction
+      .select({ bodyWeightKg: schema.userProfiles.bodyWeightKg })
+      .from(schema.userProfiles)
+      .where(eq(schema.userProfiles.userId, userId))
       .limit(1);
-    const routine = routineRows[0];
-    if (!routine) return null;
-    title = data.title ?? routine.name;
-  }
 
-  const profile = await db
-    .select({ bodyWeightKg: schema.userProfiles.bodyWeightKg })
-    .from(schema.userProfiles)
-    .where(eq(schema.userProfiles.userId, userId))
-    .limit(1);
+    const rows = await transaction
+      .insert(schema.workoutSessions)
+      .values({
+        userId,
+        routineId: data.routineId ?? null,
+        title,
+        bodyWeightKgSnapshot: profile[0]?.bodyWeightKg ?? null,
+      })
+      .returning();
+    const row = rows[0];
+    if (!row) throw new Error('insert de sessão não retornou linha');
 
-  const rows = await db
-    .insert(schema.workoutSessions)
-    .values({
-      userId,
-      routineId: data.routineId ?? null,
-      title,
-      bodyWeightKgSnapshot: profile[0]?.bodyWeightKg ?? null,
-    })
-    .returning();
-  const row = rows[0];
-  if (!row) throw new Error('insert de sessão não retornou linha');
-  return loadSessionDetail(db, row);
+    if (routineItems.length > 0) {
+      await transaction.insert(schema.sessionExercises).values(
+        routineItems.map((item) => ({
+          sessionId: row.id,
+          exerciseId: item.exerciseId,
+          position: item.position,
+          targetSets: item.targetSets,
+          targetRepsMin: item.targetRepsMin,
+          targetRepsMax: item.targetRepsMax,
+          restSeconds: item.restSeconds,
+        })),
+      );
+    }
+    return loadSessionDetail(transaction, row);
+  });
 }
 
 async function findOwnedSession(
@@ -351,6 +380,59 @@ async function findOwnedSession(
 }
 
 export type AddSetResult = { set: WorkoutSet } | 'session-not-found' | 'session-finished';
+
+export type AddSessionExerciseResult =
+  | { exercise: SessionExercise }
+  | 'session-not-found'
+  | 'session-finished'
+  | 'exercise-not-found';
+
+export async function addSessionExercise(
+  db: Database,
+  userId: string,
+  sessionId: string,
+  exerciseId: string,
+): Promise<AddSessionExerciseResult> {
+  const session = await findOwnedSession(db, userId, sessionId);
+  if (!session) return 'session-not-found';
+  if (session.finishedAt) return 'session-finished';
+
+  const exerciseRows = await db
+    .select()
+    .from(schema.exercises)
+    .where(and(eq(schema.exercises.id, exerciseId), accessibleExercise(userId)))
+    .limit(1);
+  const exercise = exerciseRows[0];
+  if (!exercise) return 'exercise-not-found';
+
+  const positionRows = await db
+    .select({ maxPosition: max(schema.sessionExercises.position) })
+    .from(schema.sessionExercises)
+    .where(eq(schema.sessionExercises.sessionId, sessionId));
+  const position = (positionRows[0]?.maxPosition ?? -1) + 1;
+  const inserted = await db
+    .insert(schema.sessionExercises)
+    .values({ sessionId, exerciseId, position, restSeconds: 90 })
+    .onConflictDoNothing()
+    .returning();
+
+  const row =
+    inserted[0] ??
+    (
+      await db
+        .select()
+        .from(schema.sessionExercises)
+        .where(
+          and(
+            eq(schema.sessionExercises.sessionId, sessionId),
+            eq(schema.sessionExercises.exerciseId, exerciseId),
+          ),
+        )
+        .limit(1)
+    )[0];
+  if (!row) throw new Error('insert de exercício da sessão não retornou linha');
+  return { exercise: toSessionExercise(row, exercise) };
+}
 
 export async function addSet(
   db: Database,
@@ -375,6 +457,13 @@ export async function addSet(
     .where(and(eq(schema.exercises.id, data.exerciseId), accessibleExercise(userId)))
     .limit(1);
   if (!exercise[0]) return 'exercise-not-found';
+
+  // Clientes antigos podem registrar o primeiro set sem chamar addExercise.
+  // Garante o vínculo real da sessão sem recorrer a uma série âncora incompleta.
+  const sessionExercise = await addSessionExercise(db, userId, data.sessionId, data.exerciseId);
+  if (sessionExercise === 'session-not-found') return 'session-not-found';
+  if (sessionExercise === 'session-finished') return 'session-finished';
+  if (sessionExercise === 'exercise-not-found') return 'exercise-not-found';
 
   const positionRows = await db
     .select({ maxPosition: max(schema.workoutSets.position) })
