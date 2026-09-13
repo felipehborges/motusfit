@@ -1,9 +1,9 @@
 # MotusFit — handoff entre dispositivos
 
-Atualizado em: 2026-09-13 13:19 UTC
+Atualizado em: 2026-09-13 13:22 UTC
 Dispositivo: não identificado nesta sessão (Windows)
-Branch: `main`, baseada no commit `5c6e14e`; a antiga `master` permanece nesse commit.
-Sincronização: commit funcional `fbb5da3` enviado com sucesso a `origin/main`. O workflow ainda apontava para `master`; a correção para `main` está preparada para um segundo commit/push. As alterações visuais pré-existentes em `apps/web/src/app/globals.css` e `apps/web/src/features/dashboard/today-card.tsx` permanecem locais e fora do escopo funcional.
+Branch: `main`, HEAD `68890cb`, sincronizada com `origin/main`; `origin/HEAD` e a default branch do GitHub apontam para `main`. A antiga `master` permanece em `5c6e14e`.
+Sincronização: commits `fbb5da3` (funcional) e `68890cb` (CI em main) enviados com sucesso. As alterações visuais pré-existentes em `apps/web/src/app/globals.css` e `apps/web/src/features/dashboard/today-card.tsx` permanecem locais e fora dos commits.
 
 ## Objetivo atual
 
@@ -13,6 +13,9 @@ Adotar `main` como branch canônica; reativar e endurecer backend/banco; protege
 
 - Checkout local alinhado em `main`; `origin/main` era ancestral direto, portanto o alinhamento é fast-forward.
 - GitHub Actions foi corrigido para executar em pushes na `main`.
+- CI remoto do commit `68890cb` concluiu com sucesso nos jobs `checks` e `e2e`.
+- Render publicou o backend novo a partir de `main`: health responde 200 e o endpoint novo de exercício avulso responde 401 sem sessão, confirmando a versão. Como o health consulta o banco, as migrations também foram aplicadas.
+- Vercel ainda entrega o frontend antigo de `master` (HTML de `/app` ainda contém a shell anterior). Alterar Production Branch para `main` é o único passo manual necessário antes do smoke autenticado.
 - `render.yaml` fixa `branch: main`. Ainda é necessário selecionar `main` como default branch no GitHub e Production Branch na Vercel pelo dashboard.
 - Backend real é padrão; demo só ativa com `NEXT_PUBLIC_DEMO_MODE=true`.
 - Produção recusa inicialização sem `DATABASE_URL` e com `AUTH_ENABLED=false`.
@@ -54,12 +57,11 @@ Adotar `main` como branch canônica; reativar e endurecer backend/banco; protege
 
 ## Pendências após publicação
 
-1. Alterar default/production branch nos dashboards de GitHub e Vercel; confirmar Render em `main`.
-2. Aguardar deploys e validar health direto/proxy.
-3. Criar conta de teste em produção e executar signup → rotina → treino → reload → concluir → histórico/estatísticas → logout/login.
-4. Consultar `users` no Neon e confirmar a conta; testar isolamento com uma segunda conta.
-5. Decidir se as alterações visuais locais devem ser commitadas separadamente.
-6. Antes de convidar amigos, configurar backup periódico e uma mensagem simples de beta/privacidade.
+1. Vercel: alterar Production Branch para `main` e aguardar o deploy.
+2. Criar conta de teste em produção e executar signup → rotina → treino → reload → concluir → histórico/estatísticas → logout/login.
+3. Consultar `users` no Neon e confirmar a conta; testar isolamento com uma segunda conta.
+4. Decidir se as alterações visuais locais devem ser commitadas separadamente.
+5. Antes de convidar amigos, configurar backup periódico e uma mensagem simples de beta/privacidade.
 
 ## Cuidados duráveis
 
