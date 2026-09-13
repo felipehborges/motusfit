@@ -1,9 +1,9 @@
 # MotusFit — handoff entre dispositivos
 
-Atualizado em: 2026-09-13 16:00 UTC
+Atualizado em: 2026-09-13 16:04 UTC
 Dispositivo: não identificado nesta sessão (Windows)
-Branch: `main`, HEAD publicado `ffc5961`, sincronizada com `origin/main` antes da correção de logout; `origin/HEAD` e a default branch do GitHub apontam para `main`. A antiga `master` permanece em `5c6e14e`.
-Sincronização: a correção de logout descrita abaixo está implementada e validada localmente, pronta para commit/push. As alterações visuais pré-existentes em `apps/web/src/app/globals.css` e `apps/web/src/features/dashboard/today-card.tsx` permanecem locais e devem ficar fora do commit funcional.
+Branch: `main`, correção de logout no commit `a02cf79`, enviada para `origin/main`; `origin/HEAD` e a default branch do GitHub apontam para `main`. A antiga `master` permanece em `5c6e14e`.
+Sincronização: CI do commit `a02cf79` concluiu com sucesso nos jobs `checks` e `e2e`; o status Vercel no GitHub confirma `Deployment has completed`. As alterações visuais pré-existentes em `apps/web/src/app/globals.css` e `apps/web/src/features/dashboard/today-card.tsx` permanecem locais e fora do commit funcional.
 
 ## Objetivo atual
 
@@ -64,11 +64,10 @@ Estabilizar o logout após a publicação do frontend da `main`, mantendo backen
 
 ## Pendências após publicação
 
-1. Commitar e enviar a correção de logout para `main`; acompanhar CI e novo deploy da Vercel.
-2. Repetir em produção o logout com um único clique e, se houver erro, registrar Network/Console do navegador.
-3. Executar o restante do smoke autenticado: rotina → treino → reload → concluir → histórico/estatísticas → login novamente; testar isolamento com segunda conta.
-4. Decidir se as alterações visuais locais devem ser commitadas separadamente.
-5. Antes de convidar amigos, configurar backup periódico e uma mensagem simples de beta/privacidade.
+1. Repetir em produção o logout com um único clique; se houver erro, a interface agora o revela e o próximo diagnóstico deve registrar Network/Console do navegador.
+2. Executar o restante do smoke autenticado: rotina → treino → reload → concluir → histórico/estatísticas → login novamente; testar isolamento com segunda conta.
+3. Decidir se as alterações visuais locais devem ser commitadas separadamente.
+4. Antes de convidar amigos, configurar backup periódico e uma mensagem simples de beta/privacidade.
 
 ## Cuidados duráveis
 
