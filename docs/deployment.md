@@ -28,10 +28,10 @@ Sem passo de migration ou seed manual: `applyMigrations` roda no boot da API e a
 
 ## CI (GitHub Actions)
 
-Workflow `ci.yml` em todo PR e push na `master`:
+Workflow `ci.yml` em todo PR e push na `main`:
 
 1. checkout (`fetch-depth: 0` para detecção de afetados) → pnpm/action-setup → setup-node 24 com cache pnpm → `pnpm install --frozen-lockfile`.
-2. `turbo run lint typecheck test build --affected` (na `master`, sem `--affected`).
+2. `turbo run lint typecheck test build --affected` (na `main`, sem `--affected`).
 3. Job e2e (Playwright) separado, condicionado a mudanças em web/api/packages.
 4. Remote cache do Turborepo: ativar quando houver time (secrets `TURBO_TOKEN`/`TURBO_TEAM`); por ora, cache local do runner.
 

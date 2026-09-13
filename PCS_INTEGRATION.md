@@ -1,9 +1,9 @@
 # MotusFit — handoff entre dispositivos
 
-Atualizado em: 2026-09-13 13:16 UTC
+Atualizado em: 2026-09-13 13:19 UTC
 Dispositivo: não identificado nesta sessão (Windows)
 Branch: `main`, baseada no commit `5c6e14e`; a antiga `master` permanece nesse commit.
-Sincronização: trabalho funcional pronto para commit/push em `origin/main`. As alterações visuais pré-existentes em `apps/web/src/app/globals.css` e `apps/web/src/features/dashboard/today-card.tsx` permanecem locais e fora do escopo funcional.
+Sincronização: commit funcional `fbb5da3` enviado com sucesso a `origin/main`. O workflow ainda apontava para `master`; a correção para `main` está preparada para um segundo commit/push. As alterações visuais pré-existentes em `apps/web/src/app/globals.css` e `apps/web/src/features/dashboard/today-card.tsx` permanecem locais e fora do escopo funcional.
 
 ## Objetivo atual
 
@@ -12,6 +12,7 @@ Adotar `main` como branch canônica; reativar e endurecer backend/banco; protege
 ## Implementado
 
 - Checkout local alinhado em `main`; `origin/main` era ancestral direto, portanto o alinhamento é fast-forward.
+- GitHub Actions foi corrigido para executar em pushes na `main`.
 - `render.yaml` fixa `branch: main`. Ainda é necessário selecionar `main` como default branch no GitHub e Production Branch na Vercel pelo dashboard.
 - Backend real é padrão; demo só ativa com `NEXT_PUBLIC_DEMO_MODE=true`.
 - Produção recusa inicialização sem `DATABASE_URL` e com `AUTH_ENABLED=false`.
