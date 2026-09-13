@@ -1,13 +1,13 @@
 # MotusFit — handoff entre dispositivos
 
-Atualizado em: 2026-09-13 13:22 UTC
+Atualizado em: 2026-09-13 16:00 UTC
 Dispositivo: não identificado nesta sessão (Windows)
-Branch: `main`, HEAD `68890cb`, sincronizada com `origin/main`; `origin/HEAD` e a default branch do GitHub apontam para `main`. A antiga `master` permanece em `5c6e14e`.
-Sincronização: commits `fbb5da3` (funcional) e `68890cb` (CI em main) enviados com sucesso. As alterações visuais pré-existentes em `apps/web/src/app/globals.css` e `apps/web/src/features/dashboard/today-card.tsx` permanecem locais e fora dos commits.
+Branch: `main`, HEAD publicado `ffc5961`, sincronizada com `origin/main` antes da correção de logout; `origin/HEAD` e a default branch do GitHub apontam para `main`. A antiga `master` permanece em `5c6e14e`.
+Sincronização: a correção de logout descrita abaixo está implementada e validada localmente, pronta para commit/push. As alterações visuais pré-existentes em `apps/web/src/app/globals.css` e `apps/web/src/features/dashboard/today-card.tsx` permanecem locais e devem ficar fora do commit funcional.
 
 ## Objetivo atual
 
-Adotar `main` como branch canônica; reativar e endurecer backend/banco; proteger a área autenticada; melhorar persistência da sessão de treino; automatizar o catálogo; orientar configuração de Render, Vercel, Neon e inspeção de usuários.
+Estabilizar o logout após a publicação do frontend da `main`, mantendo backend/banco e área autenticada operacionais em produção.
 
 ## Implementado
 
@@ -15,7 +15,10 @@ Adotar `main` como branch canônica; reativar e endurecer backend/banco; protege
 - GitHub Actions foi corrigido para executar em pushes na `main`.
 - CI remoto do commit `68890cb` concluiu com sucesso nos jobs `checks` e `e2e`.
 - Render publicou o backend novo a partir de `main`: health responde 200 e o endpoint novo de exercício avulso responde 401 sem sessão, confirmando a versão. Como o health consulta o banco, as migrations também foram aplicadas.
-- Vercel ainda entrega o frontend antigo de `master` (HTML de `/app` ainda contém a shell anterior). Alterar Production Branch para `main` é o único passo manual necessário antes do smoke autenticado.
+- O usuário alterou a Production Branch da Vercel para `main`, conseguiu cadastrar uma conta e entrar no frontend novo.
+- O Neon mostra cinco contas na tabela `users`, incluindo a conta recém-criada; o print confirma que o cadastro real está persistindo em produção.
+- Foi corrigida uma corrida no logout: o código ignorava erro do Better Auth e combinava `router.replace` com `router.refresh`. Agora bloqueia cliques repetidos, mostra `Saindo…`, trata falhas sem mascará-las, limpa o cache apenas após sucesso e faz uma única navegação completa para `/login`.
+- O E2E agora comprova que um clique gera exatamente uma chamada a `/api/auth/sign-out`, redireciona para login e mantém `/app` protegida.
 - `render.yaml` fixa `branch: main`. Ainda é necessário selecionar `main` como default branch no GitHub e Production Branch na Vercel pelo dashboard.
 - Backend real é padrão; demo só ativa com `NEXT_PUBLIC_DEMO_MODE=true`.
 - Produção recusa inicialização sem `DATABASE_URL` e com `AUTH_ENABLED=false`.
@@ -45,10 +48,14 @@ Adotar `main` como branch canônica; reativar e endurecer backend/banco; protege
 - Biome passou nos arquivos funcionais alterados; `git diff --check` passou.
 - `drizzle-kit check`: schema/migrations consistentes.
 - `pnpm db:seed`: confirmou catálogo completo com 60 exercícios, sem duplicar.
+- `pnpm exec biome check` nos três arquivos da correção de logout: passou.
+- `pnpm --filter web typecheck`: passou.
+- `pnpm --filter web build`: passou novamente após a correção.
+- `pnpm --filter web test:e2e -- workout.spec.ts`: 2 fluxos passaram e 1 foi ignorado; logout de clique único passou.
 
 ## Usuários e produção
 
-- Não foi possível listar usuários do Neon porque `DATABASE_URL` de produção não está disponível neste checkout. Não inferir que as seis contas locais existem em produção.
+- O usuário confirmou visualmente cinco contas no Neon; nenhuma senha foi inspecionada ou registrada.
 - Para ver contas: Neon Console → projeto MotusFit → Tables → tabela `users`; ou SQL Editor com `SELECT id, name, email, email_verified, created_at FROM users ORDER BY created_at DESC;`. Não consultar/copiar a coluna `accounts.password`; ela contém hash, não senha recuperável.
 - Criar usuário de teste pela tela `/signup` depois do deploy. Nunca registrar a senha neste handoff.
 - Render: serviço `motusfit-api` → Settings/Build & Deploy, branch `main`; Environment deve conter `DATABASE_URL`, `BETTER_AUTH_URL`, `CORS_ORIGINS` e segredo de auth.
@@ -57,9 +64,9 @@ Adotar `main` como branch canônica; reativar e endurecer backend/banco; protege
 
 ## Pendências após publicação
 
-1. Vercel: alterar Production Branch para `main` e aguardar o deploy.
-2. Criar conta de teste em produção e executar signup → rotina → treino → reload → concluir → histórico/estatísticas → logout/login.
-3. Consultar `users` no Neon e confirmar a conta; testar isolamento com uma segunda conta.
+1. Commitar e enviar a correção de logout para `main`; acompanhar CI e novo deploy da Vercel.
+2. Repetir em produção o logout com um único clique e, se houver erro, registrar Network/Console do navegador.
+3. Executar o restante do smoke autenticado: rotina → treino → reload → concluir → histórico/estatísticas → login novamente; testar isolamento com segunda conta.
 4. Decidir se as alterações visuais locais devem ser commitadas separadamente.
 5. Antes de convidar amigos, configurar backup periódico e uma mensagem simples de beta/privacidade.
 

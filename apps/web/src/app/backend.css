@@ -33,6 +33,23 @@
   box-shadow: 2px 2px 0 var(--line);
 }
 
+.mf-signout:disabled {
+  opacity: 0.65;
+  cursor: wait;
+  transform: none;
+  box-shadow: none;
+}
+
+.mf-signout-error {
+  max-width: 230px;
+  margin: 0;
+  color: #b42318;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.25;
+  text-align: right;
+}
+
 .mf-save-status {
   display: inline-flex;
   align-items: center;
@@ -68,5 +85,16 @@
     width: 37px;
     padding: 0;
     justify-content: center;
+  }
+
+  .mf-signout-error {
+    position: absolute;
+    top: 58px;
+    right: 12px;
+    padding: 8px 10px;
+    border: 1px solid #f1b5af;
+    border-radius: 8px;
+    background: var(--paper);
+    box-shadow: 2px 2px 0 var(--line);
   }
 }

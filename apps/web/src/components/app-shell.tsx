@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { type ReactNode, useEffect } from 'react';
+import { type ReactNode, useEffect, useState } from 'react';
 import { signOut, useSession } from '@/lib/auth-client';
 import { DEMO_MODE } from '@/lib/mock-api';
 
@@ -32,6 +32,8 @@ function AuthenticatedAppShell({ children }: { children: ReactNode }) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const session = useSession();
+  const [isSigningOut, setIsSigningOut] = useState(false);
+  const [signOutError, setSignOutError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!session.isPending && !session.data) router.replace('/login');
@@ -40,15 +42,35 @@ function AuthenticatedAppShell({ children }: { children: ReactNode }) {
   if (session.isPending) return <p className="mf-loading">Verificando sua sessão…</p>;
   if (!session.data) return <p className="mf-loading">Redirecionando para entrar…</p>;
 
+  async function handleSignOut() {
+    if (isSigningOut) return;
+
+    setIsSigningOut(true);
+    setSignOutError(null);
+
+    try {
+      const result = await signOut();
+
+      if (result.error) {
+        setSignOutError('Não foi possível sair. Tente novamente.');
+        setIsSigningOut(false);
+        return;
+      }
+
+      queryClient.clear();
+      window.location.replace('/login');
+    } catch {
+      setSignOutError('Não foi possível sair. Verifique sua conexão e tente novamente.');
+      setIsSigningOut(false);
+    }
+  }
+
   return (
     <ShellLayout
       userName={session.data.user.name}
-      onSignOut={async () => {
-        await signOut();
-        queryClient.clear();
-        router.replace('/login');
-        router.refresh();
-      }}
+      onSignOut={handleSignOut}
+      isSigningOut={isSigningOut}
+      signOutError={signOutError}
     >
       {children}
     </ShellLayout>
@@ -59,10 +81,14 @@ function ShellLayout({
   children,
   userName,
   onSignOut,
+  isSigningOut = false,
+  signOutError,
 }: {
   children: ReactNode;
   userName: string;
   onSignOut?: (() => Promise<void>) | undefined;
+  isSigningOut?: boolean;
+  signOutError?: string | null;
 }) {
   const pathname = usePathname();
   const initials =
@@ -116,13 +142,24 @@ function ShellLayout({
             <span>Jornada ativa</span>
           </div>
           <div className="mf-account-actions">
+            {signOutError && (
+              <p className="mf-signout-error" role="alert">
+                {signOutError}
+              </p>
+            )}
             <span>{userName}</span>
             <Link href="/app/perfil" className="mf-avatar" aria-label="Abrir perfil">
               {initials}
             </Link>
             {onSignOut && (
-              <button type="button" className="mf-signout" onClick={onSignOut}>
-                <LogOut size={15} /> <span>Sair</span>
+              <button
+                type="button"
+                className="mf-signout"
+                onClick={onSignOut}
+                disabled={isSigningOut}
+                aria-busy={isSigningOut}
+              >
+                <LogOut size={15} /> <span>{isSigningOut ? 'Saindo…' : 'Sair'}</span>
               </button>
             )}
           </div>

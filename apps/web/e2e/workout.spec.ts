@@ -61,8 +61,13 @@ test('rotina → sessão → séries → concluir → histórico', async ({ page
   await expect(page.getByText(/2\s*séries\s*1120\s*kg/)).toBeVisible();
 
   // Logout encerra a sessão e a área protegida redireciona para o login.
+  const signOutRequests: string[] = [];
+  page.on('request', (request) => {
+    if (request.url().includes('/api/auth/sign-out')) signOutRequests.push(request.url());
+  });
   await page.getByRole('button', { name: 'Sair' }).click();
   await expect(page).toHaveURL(/\/login$/);
+  expect(signOutRequests).toHaveLength(1);
   await page.goto('/app');
   await expect(page).toHaveURL(/\/login$/);
 });
