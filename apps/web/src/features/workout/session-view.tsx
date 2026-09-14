@@ -2,7 +2,7 @@
 
 import type { Exercise, SessionDetail, WorkoutSet } from '@motusfit/contracts';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Check, Clock3, Dumbbell, Minus, Plus, Search, Trash2 } from 'lucide-react';
+import { Check, Clock3, Dumbbell, Minus, Plus, Search, Trash2, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Metric, PageHeader } from '@/components/ui';
 import { Badge } from '@/components/ui/badge';
@@ -23,6 +23,9 @@ export function SessionView({
     api.workout.sessions.get.queryOptions({ input: { id: sessionId } }),
   );
   const restTimer = useRestTimer(sessionId);
+  const [exerciseDefaults, setExerciseDefaults] = useState<
+    Record<string, { weight: string; reps: string }>
+  >({});
 
   const invalidate = () =>
     queryClient.invalidateQueries({ queryKey: api.workout.sessions.get.key() });
@@ -34,6 +37,15 @@ export function SessionView({
         queryClient.invalidateQueries({ queryKey: api.workout.sessions.history.key() });
         queryClient.invalidateQueries({ queryKey: api.stats.today.key() });
         queryClient.invalidateQueries({ queryKey: api.stats.weekly.key() });
+        onFinished();
+      },
+    }),
+  );
+  const cancel = useMutation(
+    api.workout.sessions.cancel.mutationOptions({
+      onSuccess: () => {
+        restTimer.skip();
+        queryClient.invalidateQueries({ queryKey: api.workout.sessions.history.key() });
         onFinished();
       },
     }),
@@ -53,13 +65,33 @@ export function SessionView({
         description="Confirme cada série e deixe o MotusFit cuidar do descanso."
         action={
           !readOnly ? (
-            <Button
-              type="button"
-              disabled={finish.isPending}
-              onClick={() => finish.mutate({ id: session.id })}
-            >
-              <Check size={16} /> Concluir treino
-            </Button>
+            <div className="mf-session-actions">
+              {session.routineId === null && (
+                <Button
+                  type="button"
+                  variant="destructive"
+                  disabled={cancel.isPending || finish.isPending}
+                  onClick={() => {
+                    if (
+                      window.confirm(
+                        'Cancelar este treino livre? As séries registradas serão apagadas.',
+                      )
+                    ) {
+                      cancel.mutate({ id: session.id });
+                    }
+                  }}
+                >
+                  <X size={16} /> {cancel.isPending ? 'Cancelando…' : 'Cancelar treino'}
+                </Button>
+              )}
+              <Button
+                type="button"
+                disabled={finish.isPending || cancel.isPending}
+                onClick={() => finish.mutate({ id: session.id })}
+              >
+                <Check size={16} /> Concluir treino
+              </Button>
+            </div>
           ) : (
             <Badge className="bg-primary text-primary-foreground">
               <Check size={12} /> Finalizado
@@ -80,6 +112,11 @@ export function SessionView({
           Não foi possível concluir o treino. Verifique a conexão e tente novamente.
         </p>
       )}
+      {cancel.isError && (
+        <p className="mf-save-status error" role="alert">
+          Não foi possível cancelar o treino. Verifique a conexão e tente novamente.
+        </p>
+      )}
       <div className="mf-session-list">
         {session.exercisePlans.map((plan) => (
           <ExerciseBlock
@@ -88,17 +125,23 @@ export function SessionView({
             exercise={plan.exercise}
             restSeconds={plan.restSeconds}
             targetSets={plan.targetSets}
+            targetReps={plan.targetRepsMin}
             readOnly={readOnly}
             onChanged={invalidate}
             onRestStart={restTimer.start}
+            defaults={exerciseDefaults[plan.exercise.id]}
           />
         ))}
 
-        {session.exercises.length === 0 && (
-          <div className="mf-empty">Adicione um exercício para começar a sessão.</div>
+        {!readOnly && (
+          <AddExercise
+            onChanged={invalidate}
+            onConfigured={(exerciseId, defaults) =>
+              setExerciseDefaults((current) => ({ ...current, [exerciseId]: defaults }))
+            }
+            session={session}
+          />
         )}
-
-        {!readOnly && <AddExercise onChanged={invalidate} session={session} />}
       </div>
       {!readOnly && restTimer.remaining > 0 && (
         <RestTimerDock
@@ -116,17 +159,21 @@ function ExerciseBlock({
   exercise,
   restSeconds,
   targetSets,
+  targetReps,
   readOnly,
   onChanged,
   onRestStart,
+  defaults,
 }: {
   session: SessionDetail;
   exercise: Exercise;
   restSeconds: number;
   targetSets: number | null;
+  targetReps: number | null;
   readOnly: boolean;
   onChanged: () => void;
   onRestStart: (seconds: number) => void;
+  defaults?: { weight: string; reps: string } | undefined;
 }) {
   const sets = session.sets.filter((s) => s.exerciseId === exercise.id);
   const [extraRows, setExtraRows] = useState(0);
@@ -135,6 +182,7 @@ function ExerciseBlock({
     ...api.workout.sessions.lastSets.queryOptions({ input: { exerciseId: exercise.id } }),
     enabled: !readOnly,
   });
+  const hasPrevious = (lastSetsQuery.data?.length ?? 0) > 0;
 
   const removeSet = useMutation(
     api.workout.sessions.removeSet.mutationOptions({ onSuccess: onChanged }),
@@ -164,9 +212,12 @@ function ExerciseBlock({
           {targetSets === null ? '' : `/${targetSets}`} séries
         </Badge>
       </div>
-      <div className="mf-set-table-head" aria-hidden="true">
+      <div
+        className={`mf-set-table-head${hasPrevious ? '' : ' mf-set-table-no-previous'}`}
+        aria-hidden="true"
+      >
         <span>Série</span>
-        <span>Anterior</span>
+        {hasPrevious && <span>Último treino</span>}
         <span>Carga</span>
         <span>Reps</span>
         <span>
@@ -175,9 +226,14 @@ function ExerciseBlock({
       </div>
       <ol className="mf-set-list">
         {sets.map((set, index) => (
-          <li key={set.id} className="mf-set-row-complete">
+          <li
+            key={set.id}
+            className={`mf-set-row-complete${hasPrevious ? '' : ' mf-set-table-no-previous'}`}
+          >
             <span className="mf-set-number">{index + 1}</span>
-            <span className="mf-set-previous">{formatPrevious(lastSetsQuery.data?.[index])}</span>
+            {hasPrevious && (
+              <span className="mf-set-previous">{formatPrevious(lastSetsQuery.data?.[index])}</span>
+            )}
             <span>
               <strong>{set.weightKg}</strong>
               <small>kg</small>
@@ -210,6 +266,9 @@ function ExerciseBlock({
                 sessionId={session.id}
                 exerciseId={exercise.id}
                 previous={lastSetsQuery.data?.[index] ?? lastSetsQuery.data?.at(-1)}
+                showPrevious={hasPrevious}
+                defaultWeight={defaults?.weight}
+                defaultReps={defaults?.reps ?? (targetReps ? String(targetReps) : '')}
                 restSeconds={restSeconds}
                 onAdded={() => {
                   setSaved(true);
@@ -238,6 +297,9 @@ function DraftSetRow({
   sessionId,
   exerciseId,
   previous,
+  showPrevious,
+  defaultWeight,
+  defaultReps,
   restSeconds,
   onAdded,
   onRestStart,
@@ -247,12 +309,17 @@ function DraftSetRow({
   sessionId: string;
   exerciseId: string;
   previous?: WorkoutSet | undefined;
+  showPrevious: boolean;
+  defaultWeight?: string | undefined;
+  defaultReps?: string | undefined;
   restSeconds: number;
   onAdded: () => void;
   onRestStart: (seconds: number) => void;
 }) {
-  const [reps, setReps] = useState(previous ? String(previous.reps) : '');
-  const [weight, setWeight] = useState(previous ? String(previous.weightKg) : '');
+  const [reps, setReps] = useState(previous ? String(previous.reps) : (defaultReps ?? ''));
+  const [weight, setWeight] = useState(
+    previous ? String(previous.weightKg) : (defaultWeight ?? ''),
+  );
   const [retryPayload, setRetryPayload] = useState<{
     sessionId: string;
     exerciseId: string;
@@ -298,9 +365,9 @@ function DraftSetRow({
   };
 
   return (
-    <li className="mf-set-row-draft">
+    <li className={`mf-set-row-draft${showPrevious ? '' : ' mf-set-table-no-previous'}`}>
       <span className="mf-set-number">{index + 1}</span>
-      <span className="mf-set-previous">{formatPrevious(previous)}</span>
+      {showPrevious && <span className="mf-set-previous">{formatPrevious(previous)}</span>}
       <Input
         type="number"
         min="0"
@@ -452,8 +519,19 @@ function formatClock(seconds: number) {
   return `${String(minutes).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`;
 }
 
-function AddExercise({ session, onChanged }: { session: SessionDetail; onChanged: () => void }) {
+function AddExercise({
+  session,
+  onChanged,
+  onConfigured,
+}: {
+  session: SessionDetail;
+  onChanged: () => void;
+  onConfigured: (exerciseId: string, defaults: { weight: string; reps: string }) => void;
+}) {
   const [query, setQuery] = useState('');
+  const [series, setSeries] = useState('3');
+  const [weight, setWeight] = useState('');
+  const [reps, setReps] = useState('10');
   const searchQuery = useQuery({
     ...api.workout.exercises.search.queryOptions({ input: { query, limit: 10 } }),
     enabled: query.length > 0,
@@ -463,6 +541,16 @@ function AddExercise({ session, onChanged }: { session: SessionDetail; onChanged
   );
 
   const existing = new Set(session.exercises.map((e) => e.id));
+  const configurationIsValid =
+    Number.isInteger(Number(series)) &&
+    Number(series) >= 1 &&
+    Number(series) <= 20 &&
+    weight !== '' &&
+    Number(weight) >= 0 &&
+    reps !== '' &&
+    Number.isInteger(Number(reps)) &&
+    Number(reps) >= 1 &&
+    Number(reps) <= 100;
 
   return (
     <div className="mf-add-exercise">
@@ -473,10 +561,53 @@ function AddExercise({ session, onChanged }: { session: SessionDetail; onChanged
           <span>Busque na biblioteca do MotusFit</span>
         </div>
       </div>
+      <div className="mf-add-exercise-defaults">
+        <label htmlFor="exercise-series">
+          <span>Séries</span>
+          <Input
+            type="number"
+            id="exercise-series"
+            min="1"
+            max="20"
+            inputMode="numeric"
+            aria-label="Número de séries"
+            value={series}
+            onChange={(event) => setSeries(event.target.value)}
+          />
+        </label>
+        <label htmlFor="exercise-weight">
+          <span>Carga para todas (kg)</span>
+          <Input
+            type="number"
+            id="exercise-weight"
+            min="0"
+            step="any"
+            inputMode="decimal"
+            aria-label="Carga para todas as séries (kg)"
+            placeholder="Ex.: 50"
+            value={weight}
+            onChange={(event) => setWeight(event.target.value)}
+          />
+        </label>
+        <label htmlFor="exercise-reps">
+          <span>Reps para todas</span>
+          <Input
+            type="number"
+            id="exercise-reps"
+            min="1"
+            max="100"
+            inputMode="numeric"
+            aria-label="Repetições para todas as séries"
+            value={reps}
+            onChange={(event) => setReps(event.target.value)}
+          />
+        </label>
+      </div>
       <label htmlFor="exercise-search">
         <Search size={15} />
         <Input
           id="exercise-search"
+          aria-label="Nome do exercício"
           placeholder="Nome do exercício…"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
@@ -491,10 +622,14 @@ function AddExercise({ session, onChanged }: { session: SessionDetail; onChanged
                 <button
                   type="button"
                   className="mf-food-result"
+                  disabled={!configurationIsValid || addExercise.isPending}
                   onClick={() => {
+                    onConfigured(exercise.id, { weight, reps });
                     addExercise.mutate({
                       sessionId: session.id,
                       exerciseId: exercise.id,
+                      targetSets: Number(series),
+                      targetReps: Number(reps),
                     });
                     setQuery('');
                   }}

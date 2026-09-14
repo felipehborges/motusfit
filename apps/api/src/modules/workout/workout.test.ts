@@ -240,6 +240,8 @@ describe('workout', () => {
     const response = await c.send('POST', `/workout/sessions/${session.id}/exercises`, {
       sessionId: session.id,
       exerciseId: bench.id,
+      targetSets: 4,
+      targetReps: 8,
     });
     expect(response.status).toBe(200);
 
@@ -247,10 +249,34 @@ describe('workout', () => {
     expect(reloaded.exercisePlans).toHaveLength(1);
     expect(reloaded.exercisePlans[0]).toMatchObject({
       exercise: { id: bench.id },
-      targetSets: null,
+      targetSets: 4,
+      targetRepsMin: 8,
+      targetRepsMax: 8,
       restSeconds: 90,
     });
     expect(reloaded.sets).toHaveLength(0);
+  });
+
+  it('cancela sessão em andamento e apaga seus dados', async () => {
+    const c = api(await signUp('w-cancel@motusfit.test'));
+    const bench = await createBench(c);
+    const session = await json<SessionDetail>(c.send('POST', '/workout/sessions', {}));
+    await c.send('POST', `/workout/sessions/${session.id}/sets`, {
+      sessionId: session.id,
+      exerciseId: bench.id,
+      reps: 10,
+      weightKg: 50,
+    });
+
+    const cancelled = await c.send('DELETE', `/workout/sessions/${session.id}`, {
+      id: session.id,
+    });
+    expect(cancelled.status).toBe(200);
+    expect(await json<{ deleted: boolean }>(cancelled)).toEqual({ deleted: true });
+    expect((await c.get(`/workout/sessions/${session.id}`)).status).toBe(404);
+
+    const history = await json<{ sessions: unknown[] }>(c.get('/workout/sessions'));
+    expect(history.sessions).toHaveLength(0);
   });
 
   it('histórico paginado e last-sets', async () => {

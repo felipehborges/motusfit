@@ -144,6 +144,7 @@ export const mockFetch: typeof fetch = async (input, init) => {
   if (path === '/workout/sessions' && method === 'POST') return json(session);
   if (path.startsWith('/workout/sessions/') && path.endsWith('/finish'))
     return json({ ...session, finishedAt: '2026-09-02T13:00:00.000Z' });
+  if (path.startsWith('/workout/sessions/') && method === 'DELETE') return json({ deleted: true });
   if (path.startsWith('/workout/sessions/') && path.endsWith('/exercises'))
     return json(session.exercisePlans[0]);
   if (path.startsWith('/workout/sessions/') && path.includes('/sets'))

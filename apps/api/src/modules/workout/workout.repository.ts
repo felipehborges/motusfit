@@ -392,6 +392,8 @@ export async function addSessionExercise(
   userId: string,
   sessionId: string,
   exerciseId: string,
+  targetSets?: number,
+  targetReps?: number,
 ): Promise<AddSessionExerciseResult> {
   const session = await findOwnedSession(db, userId, sessionId);
   if (!session) return 'session-not-found';
@@ -412,7 +414,15 @@ export async function addSessionExercise(
   const position = (positionRows[0]?.maxPosition ?? -1) + 1;
   const inserted = await db
     .insert(schema.sessionExercises)
-    .values({ sessionId, exerciseId, position, restSeconds: 90 })
+    .values({
+      sessionId,
+      exerciseId,
+      position,
+      targetSets: targetSets ?? null,
+      targetRepsMin: targetReps ?? null,
+      targetRepsMax: targetReps ?? null,
+      restSeconds: 90,
+    })
     .onConflictDoNothing()
     .returning();
 
@@ -539,6 +549,20 @@ export async function finishSession(
   const row = rows[0];
   if (!row) return null;
   return loadSessionDetail(db, row);
+}
+
+export async function cancelSession(db: Database, userId: string, id: string): Promise<boolean> {
+  const rows = await db
+    .delete(schema.workoutSessions)
+    .where(
+      and(
+        eq(schema.workoutSessions.id, id),
+        eq(schema.workoutSessions.userId, userId),
+        isNull(schema.workoutSessions.finishedAt),
+      ),
+    )
+    .returning();
+  return rows.length > 0;
 }
 
 export async function getSession(

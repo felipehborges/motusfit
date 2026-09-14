@@ -1,15 +1,41 @@
 # MotusFit — handoff entre dispositivos
 
-Atualizado em: 2026-09-14 14:23 UTC
+Atualizado em: 2026-09-14 15:43 UTC
 Dispositivo: `HAMASAKI` (Windows)
-Branch: `main`, alinhada com `origin/main` (0 commits à frente e 0 atrás antes de qualquer commit desta tarefa).
-Sincronização: as melhorias de dashboard, biblioteca de treinos, inputs, ações e sessão estão registradas no commit atual da `main` e enviadas para `origin/main`. O conjunto inclui e consolida as alterações visuais que já estavam locais em `apps/web/src/app/globals.css` e `apps/web/src/features/dashboard/today-card.tsx`.
+Branch: `main`, preparada para consolidar e enviar todas as alterações locais.
+Sincronização: antes do commit final, `HEAD` e `origin/main` estavam alinhados em `9d41b16` (`feat(web): refine workout dashboard and session`), sem divergência remota. Este handoff integra o commit solicitado; confirmar o novo SHA no destino após `git pull`.
 
 ## Objetivo atual
 
-Publicar na `main` as melhorias aprovadas da experiência web: dashboard semanal, biblioteca de treinos, inputs, alinhamento de ações e sessão em andamento inspirada no fluxo por linhas do Hevy.
+Disponibilizar imediatamente na `main` remota todo o trabalho local: melhorias de UX e cancelamento do treino livre, ajustes visuais da análise semanal e o conceito de mascote neobrutalista ainda não integrado à interface.
 
 ## Implementado
+
+- Novo conceito de mascote neobrutalista gerado: criatura-máquina abstrata construída por blocos geométricos, molas e formas de impacto, com expressão mínima e núcleo em forma de raio. A paleta usa lima ácida, azul cobalto, coral, off-white e preto, com contornos pesados e textura de impressão.
+- Asset salvo em `apps/web/public/brand/motusfit-mascot-neobrutalist-v1.png`. Nenhum componente ou tela passou a consumi-lo nesta etapa.
+
+- Pesquisa visual do neobrutalismo feita na web: a direção adotada combina contornos pretos espessos, cores chapadas e saturadas, formas geométricas, contraste alto e sombras duras sem desfoque, preservando legibilidade.
+- Primeiro conceito de mascote gerado com a ferramenta integrada de imagem: personagem atlético completo, amigável, em pose de bíceps, com paleta azul/amarelo/coral/preto e fundo transparente.
+- O conceito permanece apenas para preview em `C:\Users\felip\.codex\generated_images\01a0a05c-028a-7ba2-aaa0-97fc51635fde\exec-1e88b63d-450f-48ec-93bf-ff5b830307a0.png`; nenhum asset foi adicionado ao repositório e nenhuma tela foi alterada.
+- O usuário rejeitou o primeiro conceito por considerá-lo feio; não reutilizar a direção de atleta humano com cabelo azul, roupa esportiva e tênis detalhados.
+- Segundo conceito gerado em direção totalmente diferente: criatura/totem geométrico preto, rosto mínimo, detalhes lima e um braço/bíceps magenta desproporcional como assinatura visual. Preview em `C:\Users\felip\.codex\generated_images\01a0a05c-028a-7ba2-aaa0-97fc51635fde\exec-7124660e-12dd-4bc9-aec9-2ae0d0d588dc.png`; nenhum asset foi adicionado ao repositório.
+
+- Sessões livres em andamento agora mostram “Cancelar treino” ao lado de “Concluir treino”. A ação pede confirmação, apaga a sessão e suas séries, limpa o descanso local e retorna à lista de treinos.
+- Foi criado `DELETE /workout/sessions/{id}` para cancelar somente sessões ainda não concluídas e pertencentes ao usuário; exercícios e séries vinculados são removidos por cascade.
+- Sessões iniciadas a partir de rotina não exibem o cancelamento nesta entrega; a solicitação foi especificamente para treino livre.
+- O estado vazio “Adicione um exercício...” foi removido; o formulário de adicionar exercício agora é o único bloco inicial da sessão livre.
+- O ícone de busca não invade mais o placeholder: o seletor CSS passou a atingir o `Input` real por `data-slot`, com padding adequado, e o campo recebeu nome acessível explícito.
+- A coluna antes chamada “Anterior” agora se chama “Último treino” e só aparece quando há dados históricos; em um exercício novo, a coluna e os traços sem significado são omitidos.
+- Ao escolher um exercício livre, o usuário define séries, carga para todas e reps para todas. A API persiste a quantidade/reps planejadas na prescrição congelada da sessão, e a UI replica carga/reps em todas as linhas mantendo cada campo editável separadamente.
+- O E2E novo cobre ausência do bloco duplicado, ausência da coluna sem histórico, criação de três linhas pré-preenchidas e alteração isolada da carga da segunda série.
+
+- “Insight Motus” ajustado: `.mf-insight-card` agora define `flex-direction: row`, substituindo o `flex-col` do `Card` base. Ícone e texto ficam no mesmo eixo, alinhados à esquerda; o mobile mantém a disposição em coluna pela regra existente.
+- Validação: inspeção estática de `apps/web/src/components/ui/card.tsx` e `apps/web/src/app/globals.css`; não houve testes, pois não houve alteração funcional.
+- Diagnóstico do card “Treino livre”, sem alterar código: `Card` já usa `flex flex-col`; `.mf-free-workout` usa `align-items: flex-end` e `justify-content: space-between`, mas não define `flex-direction: row`. Por isso os elementos se empilham e ficam à direita. A correção recomendada, se aprovada, é adicionar `flex-direction: row`; o media query mobile já retorna o layout para `column`.
+- Validação desta análise: inspeção estática de `apps/web/src/components/ui/card.tsx` e `apps/web/src/app/globals.css`; nenhum teste executado, pois não houve mudança de código.
+- Hover de `.mf-history-row` agora mantém o padding original e não translada a linha. O feedback visual usa fundo quente com raio de 10 px, eliminando o bloco retangular e o encolhimento percebido no histórico.
+- A análise semanal agora usa uma leitura em uma coluna: os três indicadores têm larguras equivalentes, o card “Grupos musculares” ocupa toda a largura disponível e sua altura acompanha o conteúdo, sem a área vazia antes reservada para uma segunda coluna inexistente.
+- O insight semanal foi alinhado ao mesmo ritmo de espaçamento e o texto trata corretamente `sessão`/`sessões`.
 
 - Home agora separa o status de hoje do resumo semanal e mostra sessões, volume, dias ativos e grupo muscular mais treinado. A pluralização usa explicitamente `sessão`/`sessões`, eliminando `sessãoões`.
 - A escolha das métricas foi baseada no padrão de resumo semanal, tendências e próximo passo observado em produtos de fitness e na ênfase da ACSM em participação regular/aderência.
@@ -48,6 +74,30 @@ Publicar na `main` as melhorias aprovadas da experiência web: dashboard semanal
 
 ## Validações concluídas
 
+- Validação final antes do push em 2026-09-14: `pnpm typecheck` passou (9/9 tarefas), `pnpm --filter @motusfit/api test` passou (35/35 testes) e `git diff --check` passou.
+- Novo PNG validado em 1230×1278, `Format32bppArgb`; o canto tem alpha 1/255 (visualmente transparente). Inspeção visual confirma um único personagem, silhueta inteira, ausência de texto/cenário/equipamentos e direção não humana.
+
+- PNG conceitual validado em 1254×1254, `Format32bppArgb`; o pixel do canto tem alpha 0, confirmando fundo transparente.
+- Inspeção visual: há exatamente um personagem, corpo inteiro, pose de flexão legível, sem texto, logo, equipamentos ou cenário.
+- Segundo PNG validado em 1254×1254, `Format32bppArgb`; pixel do canto com alpha 0. Inspeção visual confirma um personagem abstrato inteiro, braço flexionado legível e ausência de texto/cenário.
+
+- `pnpm typecheck`: 9/9 tarefas passaram com o novo endpoint de cancelamento.
+- `pnpm --filter web build`: passou com Next.js 16.2.10.
+- `pnpm --filter @motusfit/api test`: 35/35 passaram; o teste novo comprova que sessão e histórico somem após cancelar.
+- `pnpm --filter web exec playwright test e2e/workout.spec.ts --grep "treino livre"`: passou; o fluxo confirma o diálogo, o retorno para `/app/treinos` e a ausência de sessão “Em andamento”.
+- Biome nos sete arquivos funcionais/testes e `git diff --check`: passaram.
+- `pnpm exec biome check` nos arquivos funcionais do treino livre e no spec E2E: passou.
+- `pnpm typecheck`: 9/9 tarefas passaram após a mudança de contrato/API/web.
+- `pnpm --filter web build`: passou com Next.js 16.2.10.
+- `pnpm --filter @motusfit/api test`: 34/34 passaram; o teste de exercício avulso comprova persistência de 4 séries e 8 reps planejadas.
+- `pnpm --filter web exec playwright test e2e/workout.spec.ts --grep "treino livre"`: passou; 1/1. O cenário cobre o formulário único, três linhas pré-preenchidas, coluna histórica ausente e edição individual.
+- O spec completo de treino foi executado antes do ajuste final de acessibilidade: o fluxo preexistente passou; o cenário novo expôs a ausência de nome acessível no campo de busca, que foi corrigida e então passou isoladamente.
+
+- `git diff --check`: passou após a correção de hover.
+- O Biome ignora `apps/web/src/app/globals.css`; portanto não processou esse CSS (não é uma falha de estilo do arquivo).
+- `pnpm --filter web test:e2e -- stats.spec.ts`: passou; 2 fluxos críticos passaram e 1 de nutrição ficou ignorado pelo escopo. Também cobre a leitura da tela de Progresso após concluir um treino.
+- `git diff --check`: passou após a correção da análise semanal.
+
 - `pnpm exec biome check apps/web/src apps/web/e2e`: passou em 39 arquivos.
 - `pnpm typecheck`: 9/9 tarefas passaram.
 - `pnpm --filter web build`: passou com Next.js 16.2.10 após as alterações finais.
@@ -78,9 +128,11 @@ Publicar na `main` as melhorias aprovadas da experiência web: dashboard semanal
 
 ## Pendências / próxima ação
 
-1. Acompanhar CI e deploy automáticos do commit enviado à `main`.
-2. Depois do deploy, executar smoke autenticado em produção: dashboard → rotina → treino → descanso/reload → concluir → histórico/estatísticas → logout/login.
-3. Antes de convidar amigos, configurar backup periódico e uma mensagem simples de beta/privacidade.
+1. No outro dispositivo, executar `git switch main` e `git pull --ff-only origin main` para receber este lote.
+2. Acompanhar os deploys de API e web, pois o contrato de adicionar exercício e o endpoint de cancelamento mudaram.
+3. Depois do deploy, executar smoke autenticado em produção: treino livre → configurar exercício/séries → editar uma carga → cancelar ou concluir; depois validar histórico/estatísticas e logout/login.
+4. Revisar visualmente `/app/progresso` e a sessão livre em desktop/celular.
+5. Obter feedback sobre o mascote criatura-máquina; ele está versionado como conceito, mas ainda não é consumido pela interface.
 
 ## Cuidados duráveis
 

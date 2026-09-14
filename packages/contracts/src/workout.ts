@@ -158,7 +158,14 @@ export const workoutContract = {
         path: '/workout/sessions/{sessionId}/exercises',
         tags: ['workout'],
       })
-      .input(z.object({ sessionId: z.uuid(), exerciseId: z.uuid() }))
+      .input(
+        z.object({
+          sessionId: z.uuid(),
+          exerciseId: z.uuid(),
+          targetSets: z.number().int().min(1).max(20).optional(),
+          targetReps: z.number().int().min(1).max(100).optional(),
+        }),
+      )
       .output(sessionExerciseSchema),
     addSet: oc
       .route({ method: 'POST', path: '/workout/sessions/{sessionId}/sets', tags: ['workout'] })
@@ -186,6 +193,10 @@ export const workoutContract = {
       .route({ method: 'POST', path: '/workout/sessions/{id}/finish', tags: ['workout'] })
       .input(z.object({ id: z.uuid(), notes: z.string().max(2000).nullable().optional() }))
       .output(sessionDetailSchema),
+    cancel: oc
+      .route({ method: 'DELETE', path: '/workout/sessions/{id}', tags: ['workout'] })
+      .input(z.object({ id: z.uuid() }))
+      .output(z.object({ deleted: z.boolean() })),
     get: oc
       .route({ method: 'GET', path: '/workout/sessions/{id}', tags: ['workout'] })
       .input(z.object({ id: z.uuid() }))

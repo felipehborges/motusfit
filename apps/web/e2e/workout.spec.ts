@@ -75,3 +75,40 @@ test('rotina → sessão → séries → concluir → histórico', async ({ page
   await page.goto('/app');
   await expect(page).toHaveURL(/\/login$/);
 });
+
+test('treino livre configura e replica carga e reps nas séries', async ({ page }) => {
+  const unique = Date.now();
+
+  await page.goto('/signup');
+  await page.getByLabel('Nome').fill('Atleta Livre');
+  await page.getByLabel('E-mail').fill(`e2e-free-${unique}@motusfit.test`);
+  await page.getByLabel('Senha').fill('senha-segura-123');
+  await page.getByRole('button', { name: 'Criar conta' }).click();
+  await page.getByRole('link', { name: 'Treinos', exact: true }).click();
+  await page.getByRole('button', { name: 'Iniciar treino livre' }).click();
+
+  await expect(page.getByText('Adicione um exercício para começar a sessão.')).toHaveCount(0);
+  await page.getByLabel('Número de séries').fill('3');
+  await page.getByLabel('Carga para todas as séries (kg)').fill('50');
+  await page.getByLabel('Repetições para todas as séries').fill('8');
+  await page.getByLabel('Nome do exercício').fill('Supino Máquina');
+  await page.getByRole('button', { name: /Supino Máquina/i }).click();
+
+  await expect(page.getByText('Último treino')).toHaveCount(0);
+  await expect(page.locator('.mf-set-row-draft')).toHaveCount(3);
+  await expect(page.getByLabel('Carga (kg)', { exact: true })).toHaveValue('50');
+  await expect(page.getByLabel('Carga (kg) série 2')).toHaveValue('50');
+  await expect(page.getByLabel('Carga (kg) série 3')).toHaveValue('50');
+  await expect(page.getByLabel('Reps', { exact: true })).toHaveValue('8');
+  await expect(page.getByLabel('Reps série 2')).toHaveValue('8');
+  await expect(page.getByLabel('Reps série 3')).toHaveValue('8');
+
+  await page.getByLabel('Carga (kg) série 2').fill('55');
+  await expect(page.getByLabel('Carga (kg)', { exact: true })).toHaveValue('50');
+  await expect(page.getByLabel('Carga (kg) série 2')).toHaveValue('55');
+
+  page.once('dialog', (dialog) => dialog.accept());
+  await page.getByRole('button', { name: 'Cancelar treino' }).click();
+  await expect(page).toHaveURL(/\/app\/treinos$/);
+  await expect(page.getByText('Em andamento', { exact: true })).toHaveCount(0);
+});

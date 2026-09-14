@@ -90,7 +90,7 @@ export function WeeklyStats({ date }: { date: string }) {
           </h3>
           <p>
             {stats.workoutSessions > 0
-              ? `Você concluiu ${stats.workoutSessions} sessão nesta semana. Continue registrando para tornar sua progressão cada vez mais clara.`
+              ? `Você concluiu ${stats.workoutSessions} ${stats.workoutSessions === 1 ? 'sessão' : 'sessões'} nesta semana. Continue registrando para tornar sua progressão cada vez mais clara.`
               : 'Escolha uma rotina, conclua sua primeira sessão e volte aqui para acompanhar os resultados.'}
           </p>
         </div>

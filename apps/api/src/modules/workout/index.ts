@@ -4,6 +4,7 @@ import { implementedContract } from '../../implemented';
 import {
   addSessionExercise,
   addSet,
+  cancelSession,
   createExercise,
   createRoutine,
   finishSession,
@@ -67,6 +68,8 @@ export const workoutRouter = {
         context.user.id,
         input.sessionId,
         input.exerciseId,
+        input.targetSets,
+        input.targetReps,
       );
       if (result === 'session-not-found' || result === 'exercise-not-found') {
         throw new ORPCError('NOT_FOUND', { message: 'Sessão ou exercício não encontrado' });
@@ -102,6 +105,15 @@ export const workoutRouter = {
       );
       if (!session) throw new ORPCError('NOT_FOUND', { message: 'Sessão não encontrada' });
       return session;
+    }),
+    cancel: os.sessions.cancel.use(requireAuth).handler(async ({ context, input }) => {
+      const deleted = await cancelSession(context.db, context.user.id, input.id);
+      if (!deleted) {
+        throw new ORPCError('NOT_FOUND', {
+          message: 'Sessão não encontrada ou já concluída',
+        });
+      }
+      return { deleted };
     }),
     get: os.sessions.get.use(requireAuth).handler(async ({ context, input }) => {
       const session = await getSession(context.db, context.user.id, input.id);
