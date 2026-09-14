@@ -1,8 +1,8 @@
 'use client';
 
-import type { Exercise, SessionDetail } from '@motusfit/contracts';
+import type { Exercise, SessionDetail, WorkoutSet } from '@motusfit/contracts';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Check, Clock3, Dumbbell, Plus, Search, Trash2 } from 'lucide-react';
+import { Check, Clock3, Dumbbell, Minus, Plus, Search, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Metric, PageHeader } from '@/components/ui';
 import { Badge } from '@/components/ui/badge';
@@ -22,6 +22,7 @@ export function SessionView({
   const sessionQuery = useQuery(
     api.workout.sessions.get.queryOptions({ input: { id: sessionId } }),
   );
+  const restTimer = useRestTimer(sessionId);
 
   const invalidate = () =>
     queryClient.invalidateQueries({ queryKey: api.workout.sessions.get.key() });
@@ -31,6 +32,8 @@ export function SessionView({
       onSuccess: () => {
         // Sessão concluída muda o histórico — invalida antes de navegar de volta
         queryClient.invalidateQueries({ queryKey: api.workout.sessions.history.key() });
+        queryClient.invalidateQueries({ queryKey: api.stats.today.key() });
+        queryClient.invalidateQueries({ queryKey: api.stats.weekly.key() });
         onFinished();
       },
     }),
@@ -47,7 +50,7 @@ export function SessionView({
       <PageHeader
         eyebrow={readOnly ? 'Treino concluído' : 'Sessão em andamento'}
         title={session.title}
-        description="Registre cada série. O progresso mora nos detalhes."
+        description="Confirme cada série e deixe o MotusFit cuidar do descanso."
         action={
           !readOnly ? (
             <Button
@@ -65,6 +68,10 @@ export function SessionView({
         }
       />
       <div className="mf-session-metrics">
+        <Metric
+          label="Duração"
+          value={<SessionDuration startedAt={session.startedAt} finishedAt={session.finishedAt} />}
+        />
         <Metric label="Volume" value={Math.round(session.volumeKg)} unit="kg" tone="blue" />
         <Metric label="Séries" value={session.totalSets} unit="concluídas" tone="lime" />
       </div>
@@ -83,6 +90,7 @@ export function SessionView({
             targetSets={plan.targetSets}
             readOnly={readOnly}
             onChanged={invalidate}
+            onRestStart={restTimer.start}
           />
         ))}
 
@@ -92,6 +100,13 @@ export function SessionView({
 
         {!readOnly && <AddExercise onChanged={invalidate} session={session} />}
       </div>
+      {!readOnly && restTimer.remaining > 0 && (
+        <RestTimerDock
+          remaining={restTimer.remaining}
+          onAdjust={restTimer.adjust}
+          onSkip={restTimer.skip}
+        />
+      )}
     </div>
   );
 }
@@ -103,6 +118,7 @@ function ExerciseBlock({
   targetSets,
   readOnly,
   onChanged,
+  onRestStart,
 }: {
   session: SessionDetail;
   exercise: Exercise;
@@ -110,17 +126,28 @@ function ExerciseBlock({
   targetSets: number | null;
   readOnly: boolean;
   onChanged: () => void;
+  onRestStart: (seconds: number) => void;
 }) {
   const sets = session.sets.filter((s) => s.exerciseId === exercise.id);
+  const [extraRows, setExtraRows] = useState(0);
+  const [saved, setSaved] = useState(false);
   const lastSetsQuery = useQuery({
     ...api.workout.sessions.lastSets.queryOptions({ input: { exerciseId: exercise.id } }),
     enabled: !readOnly,
   });
-  const suggestion = lastSetsQuery.data?.[sets.length] ?? lastSetsQuery.data?.at(-1);
 
   const removeSet = useMutation(
     api.workout.sessions.removeSet.mutationOptions({ onSuccess: onChanged }),
   );
+
+  useEffect(() => {
+    if (!saved) return;
+    const timer = window.setTimeout(() => setSaved(false), 2000);
+    return () => window.clearTimeout(timer);
+  }, [saved]);
+
+  const pendingRows =
+    targetSets === null ? 1 + extraRows : Math.max(0, targetSets + extraRows - sets.length);
 
   return (
     <Card className="mf-exercise-block">
@@ -137,10 +164,20 @@ function ExerciseBlock({
           {targetSets === null ? '' : `/${targetSets}`} séries
         </Badge>
       </div>
+      <div className="mf-set-table-head" aria-hidden="true">
+        <span>Série</span>
+        <span>Anterior</span>
+        <span>Carga</span>
+        <span>Reps</span>
+        <span>
+          <Check size={15} />
+        </span>
+      </div>
       <ol className="mf-set-list">
         {sets.map((set, index) => (
-          <li key={set.id}>
-            <span className="mf-set-number">{String(index + 1).padStart(2, '0')}</span>
+          <li key={set.id} className="mf-set-row-complete">
+            <span className="mf-set-number">{index + 1}</span>
+            <span className="mf-set-previous">{formatPrevious(lastSetsQuery.data?.[index])}</span>
             <span>
               <strong>{set.weightKg}</strong>
               <small>kg</small>
@@ -162,41 +199,60 @@ function ExerciseBlock({
             )}
           </li>
         ))}
+        {!readOnly &&
+          Array.from({ length: pendingRows }).map((_, offset) => {
+            const index = sets.length + offset;
+            return (
+              <DraftSetRow
+                key={`${exercise.id}-${index}`}
+                index={index}
+                isNext={offset === 0}
+                sessionId={session.id}
+                exerciseId={exercise.id}
+                previous={lastSetsQuery.data?.[index] ?? lastSetsQuery.data?.at(-1)}
+                restSeconds={restSeconds}
+                onAdded={() => {
+                  setSaved(true);
+                  onChanged();
+                }}
+                onRestStart={onRestStart}
+              />
+            );
+          })}
       </ol>
       {!readOnly && (
-        <SetForm
-          sessionId={session.id}
-          exerciseId={exercise.id}
-          suggestedReps={suggestion?.reps}
-          suggestedWeight={suggestion?.weightKg}
-          restSeconds={restSeconds}
-          onAdded={onChanged}
-        />
+        <div className="mf-set-footer">
+          {saved && <span className="mf-save-status success">Salvo</span>}
+          <button type="button" onClick={() => setExtraRows((value) => value + 1)}>
+            <Plus size={16} /> Adicionar série
+          </button>
+        </div>
       )}
     </Card>
   );
 }
 
-function SetForm({
+function DraftSetRow({
+  index,
+  isNext,
   sessionId,
   exerciseId,
-  suggestedReps,
-  suggestedWeight,
+  previous,
   restSeconds,
   onAdded,
+  onRestStart,
 }: {
+  index: number;
+  isNext: boolean;
   sessionId: string;
   exerciseId: string;
-  suggestedReps?: number | undefined;
-  suggestedWeight?: number | undefined;
+  previous?: WorkoutSet | undefined;
   restSeconds: number;
   onAdded: () => void;
+  onRestStart: (seconds: number) => void;
 }) {
-  const [reps, setReps] = useState('');
-  const [weight, setWeight] = useState('');
-  const timerKey = `motusfit:rest:${sessionId}:${exerciseId}`;
-  const [restUntil, setRestUntil] = useState<number | null>(null);
-  const [now, setNow] = useState(() => Date.now());
+  const [reps, setReps] = useState(previous ? String(previous.reps) : '');
+  const [weight, setWeight] = useState(previous ? String(previous.weightKg) : '');
   const [retryPayload, setRetryPayload] = useState<{
     sessionId: string;
     exerciseId: string;
@@ -206,51 +262,18 @@ function SetForm({
     completed: true;
     clientId: string;
   } | null>(null);
-  const [saved, setSaved] = useState(false);
-
-  // Sugestão da última sessão pré-preenche uma única vez (docs/product.md fluxo 2)
-  useEffect(() => {
-    if (suggestedReps !== undefined) setReps((v) => (v === '' ? String(suggestedReps) : v));
-    if (suggestedWeight !== undefined) setWeight((v) => (v === '' ? String(suggestedWeight) : v));
-  }, [suggestedReps, suggestedWeight]);
 
   useEffect(() => {
-    const stored = Number(window.localStorage.getItem(timerKey));
-    if (Number.isFinite(stored) && stored > Date.now()) setRestUntil(stored);
-  }, [timerKey]);
-
-  useEffect(() => {
-    if (restUntil === null) return;
-    const tick = () => {
-      const current = Date.now();
-      setNow(current);
-      if (current >= restUntil) {
-        window.localStorage.removeItem(timerKey);
-        setRestUntil(null);
-      }
-    };
-    tick();
-    const timer = window.setInterval(tick, 1000);
-    return () => window.clearInterval(timer);
-  }, [restUntil, timerKey]);
-
-  useEffect(() => {
-    if (!saved) return;
-    const timer = window.setTimeout(() => setSaved(false), 2000);
-    return () => window.clearTimeout(timer);
-  }, [saved]);
+    if (!previous) return;
+    setReps((value) => (value === '' ? String(previous.reps) : value));
+    setWeight((value) => (value === '' ? String(previous.weightKg) : value));
+  }, [previous]);
 
   const addSet = useMutation(
     api.workout.sessions.addSet.mutationOptions({
       onSuccess: () => {
-        const until = Date.now() + restSeconds * 1000;
-        if (restSeconds > 0) {
-          window.localStorage.setItem(timerKey, String(until));
-          setNow(Date.now());
-          setRestUntil(until);
-        }
+        onRestStart(restSeconds);
         setRetryPayload(null);
-        setSaved(true);
         onAdded();
       },
       retry: 2,
@@ -270,50 +293,42 @@ function SetForm({
         completed: true,
         clientId: crypto.randomUUID(),
       } as const);
-    setSaved(false);
     setRetryPayload(nextPayload);
     addSet.mutate(nextPayload);
   };
 
-  const resting = restUntil === null ? 0 : Math.max(0, Math.ceil((restUntil - now) / 1000));
-
   return (
-    <form
-      className="mf-set-form"
-      onSubmit={(e) => {
-        e.preventDefault();
-        submitSet(null);
-      }}
-    >
-      <label className="mf-field" htmlFor={`${sessionId}-${exerciseId}-reps`}>
-        Reps
-        <Input
-          type="number"
-          id={`${sessionId}-${exerciseId}-reps`}
-          min="1"
-          className="w-24"
-          value={reps}
-          onChange={(e) => setReps(e.target.value)}
-          required
-        />
-      </label>
-      <label className="mf-field" htmlFor={`${sessionId}-${exerciseId}-weight`}>
-        Carga (kg)
-        <Input
-          type="number"
-          id={`${sessionId}-${exerciseId}-weight`}
-          min="0"
-          step="any"
-          className="w-28"
-          value={weight}
-          onChange={(e) => setWeight(e.target.value)}
-          required
-        />
-      </label>
-      <Button type="submit" disabled={addSet.isPending}>
-        <Check size={15} /> {addSet.isPending ? 'Salvando…' : 'Série feita'}
-      </Button>
-      {saved && <span className="mf-save-status success">Salvo</span>}
+    <li className="mf-set-row-draft">
+      <span className="mf-set-number">{index + 1}</span>
+      <span className="mf-set-previous">{formatPrevious(previous)}</span>
+      <Input
+        type="number"
+        min="0"
+        step="any"
+        inputMode="decimal"
+        aria-label={isNext ? 'Carga (kg)' : `Carga (kg) série ${index + 1}`}
+        value={weight}
+        onFocus={(event) => event.currentTarget.select()}
+        onChange={(event) => setWeight(event.target.value)}
+      />
+      <Input
+        type="number"
+        min="1"
+        inputMode="numeric"
+        aria-label={isNext ? 'Reps' : `Reps série ${index + 1}`}
+        value={reps}
+        onFocus={(event) => event.currentTarget.select()}
+        onChange={(event) => setReps(event.target.value)}
+      />
+      <button
+        type="button"
+        className="mf-set-check"
+        aria-label={isNext ? 'Série feita' : `Concluir série ${index + 1}`}
+        disabled={!isNext || addSet.isPending || reps === '' || weight === ''}
+        onClick={() => submitSet(null)}
+      >
+        <Check size={18} />
+      </button>
       {addSet.isError && (
         <span className="mf-save-status error" role="alert">
           Não salvou.
@@ -322,13 +337,119 @@ function SetForm({
           </button>
         </span>
       )}
-      {resting > 0 && (
-        <span className="mf-rest-timer">
-          <Clock3 size={14} /> {resting}s
-        </span>
-      )}
-    </form>
+    </li>
   );
+}
+
+function formatPrevious(set?: WorkoutSet) {
+  return set ? `${set.weightKg} kg × ${set.reps}` : '—';
+}
+
+function SessionDuration({
+  startedAt,
+  finishedAt,
+}: {
+  startedAt: string;
+  finishedAt: string | null;
+}) {
+  const [now, setNow] = useState(() =>
+    finishedAt === null ? Date.now() : new Date(finishedAt).getTime(),
+  );
+
+  useEffect(() => {
+    if (finishedAt !== null) {
+      setNow(new Date(finishedAt).getTime());
+      return;
+    }
+    const timer = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, [finishedAt]);
+
+  return formatClock(Math.max(0, Math.floor((now - new Date(startedAt).getTime()) / 1000)));
+}
+
+function useRestTimer(sessionId: string) {
+  const storageKey = `motusfit:rest:${sessionId}`;
+  const [restUntil, setRestUntil] = useState<number | null>(null);
+  const [now, setNow] = useState(() => Date.now());
+
+  useEffect(() => {
+    const stored = Number(window.localStorage.getItem(storageKey));
+    if (Number.isFinite(stored) && stored > Date.now()) setRestUntil(stored);
+  }, [storageKey]);
+
+  useEffect(() => {
+    if (restUntil === null) return;
+    const tick = () => {
+      const current = Date.now();
+      setNow(current);
+      if (current >= restUntil) {
+        window.localStorage.removeItem(storageKey);
+        setRestUntil(null);
+      }
+    };
+    tick();
+    const timer = window.setInterval(tick, 1000);
+    return () => window.clearInterval(timer);
+  }, [restUntil, storageKey]);
+
+  const setUntil = (until: number | null) => {
+    setRestUntil(until);
+    setNow(Date.now());
+    if (until === null) window.localStorage.removeItem(storageKey);
+    else window.localStorage.setItem(storageKey, String(until));
+  };
+
+  return {
+    remaining: restUntil === null ? 0 : Math.max(0, Math.ceil((restUntil - now) / 1000)),
+    start: (seconds: number) => {
+      if (seconds > 0) setUntil(Date.now() + seconds * 1000);
+    },
+    adjust: (seconds: number) => {
+      if (restUntil !== null) setUntil(Math.max(Date.now(), restUntil + seconds * 1000));
+    },
+    skip: () => setUntil(null),
+  };
+}
+
+function RestTimerDock({
+  remaining,
+  onAdjust,
+  onSkip,
+}: {
+  remaining: number;
+  onAdjust: (seconds: number) => void;
+  onSkip: () => void;
+}) {
+  return (
+    <div className="mf-rest-dock" role="timer" aria-label={`Descanso: ${remaining} segundos`}>
+      <button
+        type="button"
+        onClick={() => onAdjust(-15)}
+        aria-label="Diminuir descanso em 15 segundos"
+      >
+        <Minus size={16} /> 15
+      </button>
+      <span className="mf-rest-timer">
+        <Clock3 size={18} /> {formatClock(remaining)}
+      </span>
+      <button
+        type="button"
+        onClick={() => onAdjust(15)}
+        aria-label="Aumentar descanso em 15 segundos"
+      >
+        <Plus size={16} /> 15
+      </button>
+      <Button type="button" onClick={onSkip}>
+        Pular
+      </Button>
+    </div>
+  );
+}
+
+function formatClock(seconds: number) {
+  const minutes = Math.floor(seconds / 60);
+  return `${String(minutes).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`;
 }
 
 function AddExercise({ session, onChanged }: { session: SessionDetail; onChanged: () => void }) {

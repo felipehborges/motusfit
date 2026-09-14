@@ -9,9 +9,9 @@ export default function AppHome() {
   return (
     <div>
       <PageHeader
-        eyebrow="Resumo diário"
-        title="Seu treino, hoje."
-        description="Foque no próximo movimento, registre suas séries e acompanhe sua evolução."
+        eyebrow="Visão geral"
+        title="Seu treino em perspectiva."
+        description="Veja o ritmo da semana e siga direto para o próximo treino."
       />
       <TodayCard date={date} />
     </div>

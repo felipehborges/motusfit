@@ -2,7 +2,7 @@
 
 import type { Exercise, MuscleGroup, Routine } from '@motusfit/contracts';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import { api } from '@/lib/api';
 import { DEMO_MODE } from '@/lib/mock-api';
 
@@ -143,18 +143,45 @@ function InputNumber({
   min: number;
   onChange: (value: number) => void;
 }) {
+  const inputId = useId();
+  const [draft, setDraft] = useState(String(value));
+
+  useEffect(() => setDraft(String(value)), [value]);
+
+  const commit = (next: number) => {
+    const normalized = Math.max(min, Math.round(next));
+    setDraft(String(normalized));
+    onChange(normalized);
+  };
+
   return (
-    <label className="flex min-w-18 flex-1 flex-col gap-1 text-xs font-medium text-zinc-600 dark:text-zinc-300">
-      {label}
-      <input
-        type="number"
-        min={min}
-        className="number-input h-10 rounded-lg border border-zinc-300 bg-white px-3 text-sm text-zinc-950 outline-none transition focus:border-zinc-950 focus:ring-2 focus:ring-zinc-200 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50 dark:focus:border-zinc-100 dark:focus:ring-zinc-800"
-        value={value}
-        onChange={(event) => onChange(Number(event.target.value))}
-        required
-      />
-    </label>
+    <div className="mf-number-field flex min-w-18 flex-1 flex-col gap-1 text-xs font-medium text-zinc-600 dark:text-zinc-300">
+      <label htmlFor={inputId}>{label}</label>
+      <span className="mf-number-control">
+        <button type="button" aria-label={`Diminuir ${label}`} onClick={() => commit(value - 1)}>
+          −
+        </button>
+        <input
+          type="number"
+          id={inputId}
+          inputMode="numeric"
+          min={min}
+          className="number-input h-10 rounded-lg border border-zinc-300 bg-white px-2 text-center text-sm text-zinc-950 outline-none transition focus:border-zinc-950 focus:ring-2 focus:ring-zinc-200 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50 dark:focus:border-zinc-100 dark:focus:ring-zinc-800"
+          value={draft}
+          onFocus={(event) => event.currentTarget.select()}
+          onChange={(event) => {
+            const next = event.target.value;
+            setDraft(next);
+            if (next !== '' && Number.isFinite(Number(next))) onChange(Number(next));
+          }}
+          onBlur={() => commit(draft === '' ? min : Number(draft))}
+          required
+        />
+        <button type="button" aria-label={`Aumentar ${label}`} onClick={() => commit(value + 1)}>
+          +
+        </button>
+      </span>
+    </div>
   );
 }
 
@@ -429,16 +456,16 @@ export function RoutineForm({
       </section>
 
       {save.isError && <p className="text-sm text-red-600">Erro ao salvar a rotina.</p>}
-      <div className="flex flex-wrap gap-3">
+      <div className="mf-form-actions">
+        <button type="button" className="px-3 py-2 text-sm font-medium underline" onClick={onDone}>
+          Cancelar
+        </button>
         <button
           type="submit"
           disabled={save.isPending || items.length === 0}
           className="rounded-lg bg-zinc-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300"
         >
           {routine ? 'Salvar alterações' : 'Criar rotina'}
-        </button>
-        <button type="button" className="px-3 py-2 text-sm font-medium underline" onClick={onDone}>
-          Cancelar
         </button>
       </div>
     </form>
@@ -477,6 +504,9 @@ function NewExerciseForm({ onDone }: { onDone: (exercise: Exercise | null) => vo
           ))}
         </select>
       </label>
+      <button type="button" className="h-10 px-2 text-sm underline" onClick={() => onDone(null)}>
+        Cancelar
+      </button>
       <button
         type="button"
         disabled={create.isPending || name.length === 0}
@@ -484,9 +514,6 @@ function NewExerciseForm({ onDone }: { onDone: (exercise: Exercise | null) => vo
         onClick={() => create.mutate({ name, muscleGroup, equipment: null })}
       >
         Criar
-      </button>
-      <button type="button" className="h-10 px-2 text-sm underline" onClick={() => onDone(null)}>
-        Cancelar
       </button>
       {create.isError && <p className="w-full text-xs text-red-600">Erro ao criar o exercício.</p>}
     </div>

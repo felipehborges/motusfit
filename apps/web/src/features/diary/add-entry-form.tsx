@@ -89,12 +89,14 @@ export function AddEntryForm({
             required
           />
         </label>
-        <button type="submit" disabled={addEntry.isPending} className="mf-btn">
-          Adicionar
-        </button>
-        <button type="button" className="mf-btn mf-btn-ghost" onClick={() => setSelected(null)}>
-          voltar
-        </button>
+        <div className="mf-form-actions">
+          <button type="button" className="mf-btn mf-btn-ghost" onClick={() => setSelected(null)}>
+            Voltar
+          </button>
+          <button type="submit" disabled={addEntry.isPending} className="mf-btn">
+            Adicionar
+          </button>
+        </div>
       </form>
     );
   }

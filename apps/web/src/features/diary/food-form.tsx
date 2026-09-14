@@ -81,12 +81,14 @@ export function FoodForm({ onDone }: { onDone: (food: Food | null) => void }) {
           />
         </label>
       ))}
-      <button type="submit" disabled={createFood.isPending} className="mf-btn">
-        Salvar alimento
-      </button>
-      <button type="button" className="mf-btn mf-btn-ghost" onClick={() => onDone(null)}>
-        cancelar
-      </button>
+      <div className="mf-form-actions">
+        <button type="button" className="mf-btn mf-btn-ghost" onClick={() => onDone(null)}>
+          Cancelar
+        </button>
+        <button type="submit" disabled={createFood.isPending} className="mf-btn">
+          Salvar alimento
+        </button>
+      </div>
     </form>
   );
 }

@@ -10,7 +10,11 @@ test('rotina → sessão → séries → concluir → histórico', async ({ page
   await page.getByLabel('E-mail').fill(`e2e-w-${unique}@motusfit.test`);
   await page.getByLabel('Senha').fill('senha-segura-123');
   await page.getByRole('button', { name: 'Criar conta' }).click();
-  await expect(page.getByRole('heading', { name: /Seu treino, hoje/i })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /Seu treino em perspectiva/i })).toBeVisible();
+  await expect(
+    page.getByText('Nenhuma sessão concluída hoje. Sua rotina está a um clique.'),
+  ).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Resumo da semana' })).toBeVisible();
 
   await page.getByRole('link', { name: 'Treinos', exact: true }).click();
 
@@ -21,7 +25,7 @@ test('rotina → sessão → séries → concluir → histórico', async ({ page
   await page.getByLabel('Nome do exercício').fill(exerciseName);
   await page.getByRole('button', { name: 'Criar', exact: true }).click();
   await expect(page.getByText(exerciseName)).toBeVisible();
-  await page.getByLabel('Descanso (s)').fill('120');
+  await page.getByRole('spinbutton', { name: 'Descanso (s)', exact: true }).fill('120');
   await page.getByRole('button', { name: 'Criar rotina' }).click();
   await expect(page.getByText('Push E2E')).toBeVisible();
 
@@ -29,22 +33,22 @@ test('rotina → sessão → séries → concluir → histórico', async ({ page
   await page.getByRole('button', { name: 'Iniciar', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Push E2E' })).toBeVisible();
 
-  await page.getByLabel('Reps').fill('10');
-  await page.getByLabel('Carga (kg)').fill('60');
+  await page.getByRole('spinbutton', { name: 'Reps', exact: true }).fill('10');
+  await page.getByRole('spinbutton', { name: 'Carga (kg)', exact: true }).fill('60');
   await page.getByRole('button', { name: 'Série feita' }).click();
-  const sets = page.locator('.mf-set-list > li');
+  const sets = page.locator('.mf-set-row-complete');
   await expect(sets).toHaveCount(1);
   await expect(sets.nth(0)).toContainText(/60\s*kg\s*10\s*reps/);
   await expect(page.getByText('Salvo', { exact: true })).toBeVisible();
-  await expect(page.locator('.mf-rest-timer')).toContainText(/1(?:19|20)s/);
+  await expect(page.locator('.mf-rest-timer')).toContainText(/01:(?:59|58)/);
 
   // O descanso configurado na rotina continua após recarregar a sessão.
   await page.reload();
   await expect(page.getByRole('heading', { name: 'Push E2E' })).toBeVisible();
-  await expect(page.locator('.mf-rest-timer')).toContainText(/1(?:1\d|20)s/);
+  await expect(page.locator('.mf-rest-timer')).toContainText(/01:(?:5\d|4\d)/);
 
-  await page.getByLabel('Reps').fill('8');
-  await page.getByLabel('Carga (kg)').fill('65');
+  await page.getByRole('spinbutton', { name: 'Reps', exact: true }).fill('8');
+  await page.getByRole('spinbutton', { name: 'Carga (kg)', exact: true }).fill('65');
   await page.getByRole('button', { name: 'Série feita' }).click();
   await expect(sets).toHaveCount(2);
   await expect(sets.nth(1)).toContainText(/65\s*kg\s*8\s*reps/);

@@ -74,12 +74,14 @@ export function GoalForm({
           />
         </label>
       ))}
-      <button type="submit" disabled={setGoal.isPending} className="mf-btn">
-        Salvar
-      </button>
-      <button type="button" className="mf-btn mf-btn-ghost" onClick={() => setOpen(false)}>
-        cancelar
-      </button>
+      <div className="mf-form-actions">
+        <button type="button" className="mf-btn mf-btn-ghost" onClick={() => setOpen(false)}>
+          Cancelar
+        </button>
+        <button type="submit" disabled={setGoal.isPending} className="mf-btn">
+          Salvar
+        </button>
+      </div>
     </form>
   );
 }

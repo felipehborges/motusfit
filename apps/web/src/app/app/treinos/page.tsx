@@ -11,7 +11,6 @@ import {
   Flame,
   Plus,
   Trash2,
-  Zap,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
@@ -57,24 +56,6 @@ export default function WorkoutsPage() {
         }
       />
 
-      <Card className="mf-workout-hero">
-        <div className="mf-workout-hero-icon">
-          <Zap size={24} fill="currentColor" />
-        </div>
-        <div>
-          <Badge className="bg-primary text-primary-foreground">Pronto para começar</Badge>
-          <h2>Treino livre</h2>
-          <p>Entre no modo treino agora e escolha os exercícios durante a sessão.</p>
-        </div>
-        <Button
-          type="button"
-          disabled={startSession.isPending}
-          onClick={() => startSession.mutate({})}
-        >
-          <Dumbbell size={16} /> Iniciar agora
-        </Button>
-      </Card>
-
       {editing !== null && (
         <div className="mf-editor-wrap">
           <RoutineForm routine={editing === 'new' ? undefined : editing} onDone={invalidate} />
@@ -109,20 +90,6 @@ export default function WorkoutsPage() {
                 </span>
               </div>
               <div className="mf-routine-actions">
-                <Button
-                  type="button"
-                  onClick={() => startSession.mutate({ routineId: routine.id })}
-                >
-                  Iniciar <ChevronRight size={15} />
-                </Button>
-                <button
-                  type="button"
-                  className="mf-icon-btn"
-                  aria-label={`Editar ${routine.name}`}
-                  onClick={() => setEditing(routine)}
-                >
-                  <Edit3 size={15} />
-                </button>
                 <button
                   type="button"
                   className="mf-icon-btn danger"
@@ -131,6 +98,20 @@ export default function WorkoutsPage() {
                 >
                   <Trash2 size={15} />
                 </button>
+                <button
+                  type="button"
+                  className="mf-icon-btn"
+                  aria-label={`Editar ${routine.name}`}
+                  onClick={() => setEditing(routine)}
+                >
+                  <Edit3 size={15} />
+                </button>
+                <Button
+                  type="button"
+                  onClick={() => startSession.mutate({ routineId: routine.id })}
+                >
+                  Iniciar <ChevronRight size={15} />
+                </Button>
               </div>
             </Card>
           ))}
@@ -179,6 +160,31 @@ export default function WorkoutsPage() {
           {historyQuery.data?.sessions.length === 0 && (
             <div className="mf-empty">Nenhum treino registrado. Seu histórico começa hoje.</div>
           )}
+        </Card>
+      </section>
+
+      <section className="mf-section-block mf-free-workout-section">
+        <SectionHeader
+          eyebrow="Alternativa"
+          title="Treino livre"
+          description="Use somente quando quiser registrar uma sessão fora das suas rotinas."
+        />
+        <Card className="mf-free-workout">
+          <div>
+            <Dumbbell size={19} />
+            <p>
+              <strong>Começar sem rotina</strong>
+              <span>Escolha os exercícios durante a sessão.</span>
+            </p>
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            disabled={startSession.isPending}
+            onClick={() => startSession.mutate({})}
+          >
+            Iniciar treino livre <ChevronRight size={15} />
+          </Button>
         </Card>
       </section>
     </div>

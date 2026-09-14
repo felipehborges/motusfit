@@ -10,7 +10,7 @@ test('treino concluído aparece nas estatísticas da semana', async ({ page }) =
   await page.getByLabel('E-mail').fill(`e2e-s-${unique}@motusfit.test`);
   await page.getByLabel('Senha').fill('senha-segura-123');
   await page.getByRole('button', { name: 'Criar conta' }).click();
-  await expect(page.getByRole('heading', { name: /Seu treino, hoje/i })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /Seu treino em perspectiva/i })).toBeVisible();
 
   await page.getByRole('link', { name: 'Treinos', exact: true }).click();
   await page.getByRole('button', { name: 'Nova rotina' }).click();
@@ -24,10 +24,10 @@ test('treino concluído aparece nas estatísticas da semana', async ({ page }) =
   await expect(page.getByText('Legs E2E')).toBeVisible();
 
   await page.getByRole('button', { name: 'Iniciar', exact: true }).click();
-  await page.getByLabel('Reps').fill('10');
-  await page.getByLabel('Carga (kg)').fill('100');
+  await page.getByRole('spinbutton', { name: 'Reps', exact: true }).fill('10');
+  await page.getByRole('spinbutton', { name: 'Carga (kg)', exact: true }).fill('100');
   await page.getByRole('button', { name: 'Série feita' }).click();
-  await expect(page.locator('.mf-set-list > li')).toHaveCount(1);
+  await expect(page.locator('.mf-set-row-complete')).toHaveCount(1);
   await page.getByRole('button', { name: 'Concluir treino' }).click();
   await expect(page.getByRole('heading', { name: 'Atividade recente' })).toBeVisible();
 

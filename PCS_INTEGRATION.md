@@ -1,16 +1,24 @@
 # MotusFit — handoff entre dispositivos
 
-Atualizado em: 2026-09-13 16:04 UTC
-Dispositivo: não identificado nesta sessão (Windows)
-Branch: `main`, correção de logout no commit `a02cf79`, enviada para `origin/main`; `origin/HEAD` e a default branch do GitHub apontam para `main`. A antiga `master` permanece em `5c6e14e`.
-Sincronização: CI do commit `a02cf79` concluiu com sucesso nos jobs `checks` e `e2e`; o status Vercel no GitHub confirma `Deployment has completed`. As alterações visuais pré-existentes em `apps/web/src/app/globals.css` e `apps/web/src/features/dashboard/today-card.tsx` permanecem locais e fora do commit funcional.
+Atualizado em: 2026-09-14 14:23 UTC
+Dispositivo: `HAMASAKI` (Windows)
+Branch: `main`, alinhada com `origin/main` (0 commits à frente e 0 atrás antes de qualquer commit desta tarefa).
+Sincronização: as melhorias de dashboard, biblioteca de treinos, inputs, ações e sessão estão registradas no commit atual da `main` e enviadas para `origin/main`. O conjunto inclui e consolida as alterações visuais que já estavam locais em `apps/web/src/app/globals.css` e `apps/web/src/features/dashboard/today-card.tsx`.
 
 ## Objetivo atual
 
-Estabilizar o logout após a publicação do frontend da `main`, mantendo backend/banco e área autenticada operacionais em produção.
+Publicar na `main` as melhorias aprovadas da experiência web: dashboard semanal, biblioteca de treinos, inputs, alinhamento de ações e sessão em andamento inspirada no fluxo por linhas do Hevy.
 
 ## Implementado
 
+- Home agora separa o status de hoje do resumo semanal e mostra sessões, volume, dias ativos e grupo muscular mais treinado. A pluralização usa explicitamente `sessão`/`sessões`, eliminando `sessãoões`.
+- A escolha das métricas foi baseada no padrão de resumo semanal, tendências e próximo passo observado em produtos de fitness e na ênfase da ACSM em participação regular/aderência.
+- Treino livre saiu do hero e foi movido para uma alternativa discreta depois de rotinas e histórico; a decoração textual “POWER” foi removida.
+- Cards de rotina agora alinham excluir/editar/iniciar no canto inferior direito, com `Iniciar` na ponta direita. Formulários de rotina, diário e perfil usam o mesmo princípio, deixando a ação principal por último.
+- Inputs de séries, reps mín./máx. e descanso mantêm um rascunho textual, portanto o usuário consegue apagar o valor sem ele virar `0`; receberam seletores −/+ próprios e os spinners nativos foram ocultados.
+- Sessão em andamento agora mostra duração, volume e séries; cada exercício apresenta linhas planejadas com série anterior, carga, reps e confirmação. Dados da sessão anterior pré-preenchem as linhas quando existem; a primeira linha pendente pode ser concluída diretamente e há “Adicionar série”.
+- O descanso passou a ser global por sessão, persiste no `localStorage`, aparece em dock fixo e oferece −15 s, +15 s e pular. Concluir um treino invalida também os caches de estatísticas diárias e semanais.
+- E2E foi atualizado para a nova semântica e cobre o zero state correto, resumo semanal, substituição direta do descanso, registro por linha, persistência do timer, conclusão e estatísticas.
 - Checkout local alinhado em `main`; `origin/main` era ancestral direto, portanto o alinhamento é fast-forward.
 - GitHub Actions foi corrigido para executar em pushes na `main`.
 - CI remoto do commit `68890cb` concluiu com sucesso nos jobs `checks` e `e2e`.
@@ -40,6 +48,12 @@ Estabilizar o logout após a publicação do frontend da `main`, mantendo backen
 
 ## Validações concluídas
 
+- `pnpm exec biome check apps/web/src apps/web/e2e`: passou em 39 arquivos.
+- `pnpm typecheck`: 9/9 tarefas passaram.
+- `pnpm --filter web build`: passou com Next.js 16.2.10 após as alterações finais.
+- `pnpm --filter web test:e2e`: 2 fluxos de treino/estatísticas passaram; nutrição permaneceu ignorada pelo escopo atual.
+- Auditoria visual temporária passou em desktop 1440×1000 e mobile 390×844 para home, treinos e sessão; o spec temporário foi removido depois das capturas.
+- `git diff --check`: passou.
 - `pnpm --filter @motusfit/api test`: 34/34 testes passaram em 6 arquivos.
 - `pnpm typecheck`: 9/9 tarefas passaram, incluindo web, mobile, API, contratos e DB.
 - `pnpm --filter web build`: passou com Next.js 16.2.10.
@@ -62,12 +76,11 @@ Estabilizar o logout após a publicação do frontend da `main`, mantendo backen
 - Vercel: projeto `motusfit-web` → Settings → Environments → Production → Branch Tracking = `main`; Environment Variables deve conter `API_URL`; `NEXT_PUBLIC_DEMO_MODE` deve estar ausente ou `false`.
 - GitHub: repository Settings → Branches/Default branch → `main` após `origin/main` receber o commit.
 
-## Pendências após publicação
+## Pendências / próxima ação
 
-1. Repetir em produção o logout com um único clique; se houver erro, a interface agora o revela e o próximo diagnóstico deve registrar Network/Console do navegador.
-2. Executar o restante do smoke autenticado: rotina → treino → reload → concluir → histórico/estatísticas → login novamente; testar isolamento com segunda conta.
-3. Decidir se as alterações visuais locais devem ser commitadas separadamente.
-4. Antes de convidar amigos, configurar backup periódico e uma mensagem simples de beta/privacidade.
+1. Acompanhar CI e deploy automáticos do commit enviado à `main`.
+2. Depois do deploy, executar smoke autenticado em produção: dashboard → rotina → treino → descanso/reload → concluir → histórico/estatísticas → logout/login.
+3. Antes de convidar amigos, configurar backup periódico e uma mensagem simples de beta/privacidade.
 
 ## Cuidados duráveis
 
